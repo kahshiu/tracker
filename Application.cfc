@@ -10,22 +10,24 @@
     <cfset this.clientStorage=false>
     <cfset this.scriptProtect=true>
 
-    <cfset variables.sequence = ''>
+    <cfset variables.debug.sequence.activate = true>
+    <cfset variables.debug.sequence.show = 'current'><!--- option to show stages (current, all) --->
 
 <!--- application hooks --->
     <cffunction access="public" name="onApplicationStart" output=true>
         <cfset this.resetAppVars()>
-        <cfset variables.sequence = ListAppend(variables.sequence,'AppStarted')>
+        <cfset this.stampSequence(getFunctionCalledName())>
+        <cfset this.printSequence()>
     </cffunction>
 
     <cffunction access="public" name="onApplicationEnd" output=true>
-        <!--- audit logging --->
-        <cfset variables.sequence = ListAppend(variables.sequence,'AppEnded')>
+        <!--- application audit logging --->
+        <cfset this.stampSequence(getFunctionCalledName())>
+        <cfset this.printSequence()>
     </cffunction>
 
 <!--- session hooks --->
     <cffunction access="public" name="onSessionStart" output=true>
-
         <cfif this.checkStatus() eq 'unauthenticated'>
             <cfset isAuthentic = this.authenticate(1,1)>
             <cfif isAuthentic.flag>
@@ -39,15 +41,16 @@
             </cfif>
         </cfif>
 
-        <!--- check url.user = username hash() --->
-        <cfset variables.sequence = ListAppend(variables.sequence,'SessionStarted')>
+        <cfset this.stampSequence(getFunctionCalledName())>
+        <cfset this.printSequence()>
         <!--- junk
         #getPageContext().getSession().invalidate()#
         --->
     </cffunction>
 
     <cffunction access="public" name="onSessionEnd" output=true>
-        <cfset variables.sequence = ListAppend(variables.sequence,'SessionEnded')>
+        <cfset this.stampSequence(getFunctionCalledName())>
+        <cfset this.printSequence()>
     </cffunction>
 
 <!--- request hooks --->
@@ -56,47 +59,48 @@
         <cfargument name="resetAppVars" required="false" default="true">
         <cfargument name="debugSession" required="false" default="false">
 
-<!---
-        <cfset session.setMaxInactiveInterval(session.timeout)>
---->
-        <cfif arguments.resetAppVars> <cfset this.resetAppVars()> </cfif>
-<!--- 
-access rights
---->
-            <cfset request.sequence = variables.sequence>
-            <cfset request.web = application.web>
-            <cfset request.dir = application.dir>
-            <cfset request.railo = application.railo>
-            <cfset request.obj.router = application.obj.router>
-<!---
-            <cfif this.checkStatus() eq 'loggedIn'>
-                <cfset request.db = session.vars.db>
-            </cfif>
---->
-<!--- 
-need to check if session is actuall permitted
---->
-        <cfset variables.sequence = ListAppend(variables.sequence,'RequestStarted')>
+        <cfif arguments.resetAppVars>
+            <cfset this.resetAppVars()> 
+        </cfif>
+        <cfif this.checkStatus() eq 'loggedIn'>
+            <cfset request.db = session.vars.db>
+        </cfif>
+
+        <!--- domain/ application access rights --->
+        <!--- need to check if session is actuall permitted --->
+        <!--- check url.user = username hash() --->
+        <cfset request.web = application.web>
+        <cfset request.dir = application.dir>
+        <cfset request.railo = application.railo>
+        <cfset request.obj.router = application.obj.router>
+
+        <cfset this.stampSequence(getFunctionCalledName())>
+        <cfset this.printSequence()>
     </cffunction>
 
     <cffunction access="public" name="onRequest" output=true>
         <cfargument name="targetPage" required="true">
 
         <cfset route='login_home'>
-        <cfif NOT isScriptLegal(CGI.script_name)> 
+        <cfif NOT isScriptLegal(arguments.targetpage)> 
             <cfset route='warning_illegalScriptName'>    
         </cfif>
         <cfset route = 'admin_home'>
         <cfset request.obj.router.view(route)>
 
-        <!--- logout page to clear session.vars struct --->
-        <cfset variables.sequence = ListAppend(variables.sequence,'RequestExcuted')>
+        <cfset this.stampSequence(getFunctionCalledName())>
+        <cfset this.printSequence()>
     </cffunction>
 
     <cffunction access="public" name="onRequestEnd" output=true>
         <!--- domain event triggers --->
-        <cfset variables.sequence = ListAppend(variables.sequence,'RequestEnded')>
-        <cfdump var='#variables.sequence#'>
+
+        <!--- logout operation --->
+        <cfif session.timeout eq 1> <cfset StructClear(session.vars)> </cfif>
+        <cfset session.setMaxInactiveInterval(session.timeout)>
+
+        <cfset this.stampSequence(getFunctionCalledName())>
+        <cfset this.printSequence()>
     </cffunction>
 
 <!--- error hooks --->
@@ -257,6 +261,7 @@ need to check if session is actuall permitted
             <cfset application.railo.web = "http://#application.web.host#/railo-context/admin/web.cfm">
             <cfset application.obj = {}>
             <cfset application.obj.router = createObject('component','#application.dir.cfc#/router')>
+            <cfset application.obj.Sequencer = createObject('component','#application.dir.cfc#/Sequencer')>
     </cffunction>
 
     <cffunction access="public" name="resetDB" output=false>
@@ -310,5 +315,26 @@ need to check if session is actuall permitted
         <cfreturn authenticity>
     </cffunction>
 
+    <cffunction name="stampSequence" output="true">
+        <cfargument required="true" name="functionName" default="">
+        <cfif variables.debug.sequence.activate>
+            <cfif NOT StructKeyExists(variables,'Sequencer')>
+                <cfset variables.Sequencer = application.obj.Sequencer>
+                <cfset variables.Sequencer.init()>
+            </cfif>
+            <cfset variables.Sequencer.setSequence(arguments.functionName)>
+        </cfif>
+    </cffunction>
+
+    <cffunction name="printSequence" output="true">
+        <cfif variables.debug.sequence.activate>
+            <cfif ListFindNoCase(variables.debug.sequence.show,'all') gt 0> 
+                <cfdump var='Full Stages: #variables.sequencer.getFullSequence()#'>
+            </cfif>
+            <cfif ListFindNoCase(variables.debug.sequence.show,'current') gt 0> 
+                <cfdump var='Current Stage: #variables.sequencer.getSequence()#'>
+            </cfif>
+        </cfif>
+    </cffunction>
 
 </cfcomponent>

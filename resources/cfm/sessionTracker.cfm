@@ -1,7 +1,5 @@
 <cfparam name="attributes.appname" default="#application.applicationName#">
 <cfparam name="attributes.print" default="sessionTracker">
-<cfparam name="attributes.timeout" default="-1">
-
 <!--- 
 <cfparam name="attributes.print" default="sessionTrackerClass,sessionTracker,session">
 --->
@@ -13,20 +11,14 @@ print is list of options:
 -session
 --->
 <cfif StructKeyExists(url,'timeout')>
-    <cfif url.timeout eq 'long'> <cfset attributes.timeout = '2700'>
+    <cfif url.timeout eq 'long'> <cfset session.timeout = '2700'>
     </cfif>
-    <cfif url.timeout eq 'med'> <cfset attributes.timeout = '120'>
+    <cfif url.timeout eq 'med'> <cfset session.timeout = '120'>
     </cfif>
-    <cfif url.timeout eq 'short'> <cfset attributes.timeout = '30'>
+    <cfif url.timeout eq 'short'> <cfset session.timeout = '30'>
     </cfif>
-    <cfif url.timeout eq 'kill'> 
-        <cfset attributes.timeout = '1'>
-        <cfset StructClear(session.vars)> 
+    <cfif url.timeout eq 'kill'> <cfset session.timeout = '1'>
     </cfif>
-</cfif>
-<cfif attributes.timeout neq -1> 
-    <cfdump var=#attributes.timeout#>
-    <cfset session.setMaxInactiveInterval(attributes.timeout)> 
 </cfif>
 
 <cfif ListLen(attributes.print) gt 0>
@@ -85,9 +77,9 @@ print is list of options:
             <tbody>
                 <cfloop collection='#variables.sessions#' item="key">
                     <cfset item = #variables.sessions[key]#>
-                    <cfset currentTimeout = item.getMaxInactiveInterval()>
 
                     <cfset isCurrentSession = item.urltoken eq session.urltoken>
+<cfset request.sequence = 'asdf'>
                     <cfset isStartedSession = ListFindNoCase(request.sequence,'SessionStarted') gt 0>
                     <cfset variables.text = isCurrentSession?'&nbsp;Current Session':''>
                     <cfset variables.text = variables.text&#isStartedSession?'&nbsp;Fresh Session':''#>
@@ -101,13 +93,14 @@ print is list of options:
                             </cfif>
                         </td>
                         <td>Timeout</td>
-                        <td>: #currentTimeout#</td>
+                        <td>: #item.timeout#</td>
                         <td rowspan=4>
                             <a href="#application.web.URL##item.urltoken#&timeout=long">Long</a>
                             <br><a href="#application.web.URL##item.urltoken#&timeout=med">Medium</a>
                             <br><a href="#application.web.URL##item.urltoken#&timeout=short">Short</a>
                             <br><a href="#application.web.URL##item.urltoken#&timeout=kill">Kill</a>
                         </td>
+<!---
                         <td rowspan=4>
                             <cfif StructKeyExists(item,'vars')>
                                 <cfif StructIsEmpty(item.vars)> Logged out [Struct cleared]
@@ -115,9 +108,10 @@ print is list of options:
                                 </cfif>
                             <cfelse> Not logged in [Key not exists] 
                             </cfif>
+--->
                     </tr>
                     <tr><td>expire</td>
-                        <td>: #DateAdd('s',currentTimeout,item.lastvisit)#</td>
+                        <td>: #DateAdd('s',item.timeout,item.lastvisit)#</td>
                     </tr>
                     <tr><td>last visit</td>
                         <td>: #item.lastvisit#</td>
