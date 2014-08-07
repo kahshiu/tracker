@@ -28,8 +28,8 @@
 
 <!--- session hooks --->
     <cffunction access="public" name="onSessionStart" output=true>
-        <cfif this.checkStatus() eq 'unauthenticated'>
-            <cfset isAuthentic = this.authenticate(1,1)>
+        <cfif application.obj.Authenticator.status() eq 'unauthenticated'>
+            <cfset isAuthentic = application.obj.Authenticator.authenticate(1,1)>
             <cfif isAuthentic.flag>
                 <cfset session.vars.user = 1>
                 <cfset session.vars.appNow = 'tracker'>
@@ -41,6 +41,7 @@
             </cfif>
         </cfif>
 
+        <cfset session.isFresh = true>
         <cfset this.stampSequence(getFunctionCalledName())>
         <cfset this.printSequence()>
         <!--- junk
@@ -62,7 +63,8 @@
         <cfif arguments.resetAppVars>
             <cfset this.resetAppVars()> 
         </cfif>
-        <cfif this.checkStatus() eq 'loggedIn'>
+
+        <cfif application.obj.Authenticator.status() eq 'loggedIn'>
             <cfset request.db = session.vars.db>
         </cfif>
 
@@ -260,8 +262,9 @@
             <cfset application.railo.server = "http://#application.web.host#/railo-context/admin/server.cfm">
             <cfset application.railo.web = "http://#application.web.host#/railo-context/admin/web.cfm">
             <cfset application.obj = {}>
-            <cfset application.obj.router = createObject('component','#application.dir.cfc#/router')>
+            <cfset application.obj.Router = createObject('component','#application.dir.cfc#/Router')>
             <cfset application.obj.Sequencer = createObject('component','#application.dir.cfc#/Sequencer')>
+            <cfset application.obj.Authenticator = createObject('component','#application.dir.cfc#/Authenticator')>
     </cffunction>
 
     <cffunction access="public" name="resetDB" output=false>
@@ -280,39 +283,9 @@
         <cfreturn db>
     </cffunction>
 
-    <cffunction access="public" name="checkStatus" output=false>
-        <cfset var status = ''>
-        <cfif StructKeyExists(session,'vars')>
-            <cfif StructIsEmpty(session.vars)> 
-                <cfset status='loggedOut'>
-            <cfelse> 
-                <cfset status='loggedIn'>
-            </cfif>
-        <cfelse> 
-            <cfset status='unauthenticated'>
-        </cfif>
-        <cfreturn status>
-    </cffunction>
-
     <cffunction access="public" name="isScriptLegal" output=false>
         <cfargument name="accessedScript" required="true">
         <cfreturn application.web.gateway eq arguments.accessedScript>
-    </cffunction>
-
-    <cffunction access="public" name="authenticate" output=true>
-        <cfargument name="username" required="true">
-        <cfargument name="password" required="true">
-            <!--- 
-            <cfquery name="qry_identity" datasource="logger">
-                select * from sec0001 
-                where vauserpwdhashed = <cfqueryparam CFSQLType='CF_SQL_VARCHAR' value=hash(arguments.username)>
-                and vausidhashed =  <cfqueryparam CFSQLType='CF_SQL_VARCHAR' value=hash(arguments.password)
-            </cfquery>
-            --->
-        <cfset qry_identity.recordcount =1>
-        <cfset authenticity = {}>
-        <cfset authenticity.flag = qry_identity.recordcount eq 1>
-        <cfreturn authenticity>
     </cffunction>
 
     <cffunction name="stampSequence" output="true">

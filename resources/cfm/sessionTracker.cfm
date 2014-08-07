@@ -32,7 +32,7 @@ print is list of options:
     <style>
         table td{vertical-align:top}
     </style>
-    <!--- List sessions tracker --->
+    <!--- {{{ List sessions tracker --->
     <cfif ListFindNoCase(attributes.print,'sessionTrackerClass') gt 0>
     <br> <table>
             <thead>
@@ -56,6 +56,7 @@ print is list of options:
             </tbody>
         </table>
     </cfif>
+    <!--- }}} List sessions tracker --->
 
     <!--- List sessions --->
     <cfif ListFindNoCase(attributes.print,'sessionTracker') gt 0>
@@ -64,10 +65,8 @@ print is list of options:
                 <tr>
                     <th>
                         Session ID 
-                        &nbsp; &nbsp; &nbsp; &nbsp;
-                        (Total: #variables.total#)
-                        &nbsp; &nbsp; &nbsp; &nbsp;
-                        <a href='#application.web.URL#'>Create session</a>
+                        &nbsp; &nbsp; &nbsp; &nbsp; (Total: #variables.total#)
+                        &nbsp; &nbsp; &nbsp; &nbsp; <a href='#application.web.URL#'>Create session</a>
                     </th>
                     <th colspan=2>Timing <br>(Now: #now()#)</th>
                     <th>Timeout</th>
@@ -78,28 +77,38 @@ print is list of options:
                 <cfloop collection='#variables.sessions#' item="key">
                     <cfset item = #variables.sessions[key]#>
 
-                    <cfset isCurrentSession = item.urltoken eq session.urltoken>
-<cfset request.sequence = 'asdf'>
-                    <cfset isStartedSession = ListFindNoCase(request.sequence,'SessionStarted') gt 0>
-                    <cfset variables.text = isCurrentSession?'&nbsp;Current Session':''>
-                    <cfset variables.text = variables.text&#isStartedSession?'&nbsp;Fresh Session':''#>
-                    <cfset variables.text = variables.text&'&nbsp;'>
+                    <cfset isCurrentSession = item.sessionId eq session.sessionId>
+                    <cfset isFreshSession = StructKeyExists(session,'isFresh')>
+
+                    <cfset variables.text = ''>
+                    <cfset variables.text = ListAppend(variables.text,#isFreshSession?'&nbsp;Fresh Session&nbsp;':''#,' ')>
+                    <cfset variables.text = ListAppend(variables.text,#isCurrentSession?'&nbsp;Current Session&nbsp;':''#,' ')>
+
                     <tr>
                         <td rowspan=4>
                             [#key#]
-                            <br><a href='#application.web.URL##item.urltoken#'>?#item.urltoken#</a>
+                            <cfif item.timeout eq 1>
+                                <br>?#item.urltoken#
+                            <cfelse>
+                                <br><a href='#application.web.URL##item.urltoken#'>?#item.urltoken#</a>
+                            </cfif>
                             <cfif isCurrentSession>
-                            <br><span style="color:white;background-color:darkred;font-weight:bold">#variables.text#</span>
+                                <br><span style="color:white;background-color:darkred;font-weight:bold">#variables.text#</span>
                             </cfif>
                         </td>
                         <td>Timeout</td>
                         <td>: #item.timeout#</td>
                         <td rowspan=4>
-                            <a href="#application.web.URL##item.urltoken#&timeout=long">Long</a>
-                            <br><a href="#application.web.URL##item.urltoken#&timeout=med">Medium</a>
-                            <br><a href="#application.web.URL##item.urltoken#&timeout=short">Short</a>
-                            <br><a href="#application.web.URL##item.urltoken#&timeout=kill">Kill</a>
+                            <cfif item.timeout eq 1>
+                                [Killed]
+                            <cfelse>
+                                <a href="#application.web.URL##item.urltoken#&timeout=long">Long</a>
+                                <br><a href="#application.web.URL##item.urltoken#&timeout=med">Medium</a>
+                                <br><a href="#application.web.URL##item.urltoken#&timeout=short">Short</a>
+                                <br><a href="#application.web.URL##item.urltoken#&timeout=kill">Kill</a>
+                            </cfif>
                         </td>
+<cfdump var=#session#>
 <!---
                         <td rowspan=4>
                             <cfif StructKeyExists(item,'vars')>
