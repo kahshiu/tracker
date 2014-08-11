@@ -19,14 +19,13 @@
         </div>
         <div class="col-2-3"> 
 <!--- announcement --->
-        <cfquery name="qry_announcement" datasource="logger">
+        <cfquery name="qry_announcement" datasource="gatekeeper">
             select top 20 vaAnnouncement, thedate = coalesce(ann.dtModOn, ann.dtCrtOn), usermail = case when isNull(usr.vaemail,'') = '' then 'Stranger.no-mail' else usr.vaemail end
             from announcement ann inner join sec0001 usr on usr.iusid = ann.iusid
             order by iannounce desc
         </cfquery>
         <table>
             <tbody class="alt">
-<cf
             <tr> <td colspan=3><input type="button" data-link="" onclick="gotoDataLink(this)" value="Announcement"></td> </tr>
             <cfloop query="qry_announcement">
                 <tr>
@@ -44,3 +43,5 @@
     </body>
 </html>
 </cfoutput>
+<cfset caller.this.view('warnings_refusedPage','')>
+

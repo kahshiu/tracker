@@ -28,20 +28,10 @@
 
 <!--- session hooks --->
     <cffunction access="public" name="onSessionStart" output=true>
-        <cfif application.obj.Authenticator.status() eq 'unauthenticated'>
-            <cfset isAuthentic = application.obj.Authenticator.authenticate(1,1)>
-            <cfif isAuthentic.flag>
-                <cfset session.vars.user = 1>
-                <cfset session.vars.appNow = 'tracker'>
-                <cfset session.vars.envNow = 'live'>
-                <cfset session.vars.db = this.resetDB( session.vars.appNow,session.vars.envNow )>
-                <cfset session.timeout = 2700>
-            <cfelse>
-                <cfset session.timeout = 1>
-            </cfif>
-        </cfif>
-
-        <cfset session.isFresh = true>
+        <cfset session.setting.timeout = 5>
+        <cfset session.setting.appNow = 'login'>
+        <cfset session.setting.envNow = ''>
+        <cfset session.setting.db = 'login'>
         <cfset this.stampSequence(getFunctionCalledName())>
         <cfset this.printSequence()>
         <!--- junk
@@ -50,6 +40,7 @@
     </cffunction>
 
     <cffunction access="public" name="onSessionEnd" output=true>
+<!--- kill session.var --->
         <cfset this.stampSequence(getFunctionCalledName())>
         <cfset this.printSequence()>
     </cffunction>
@@ -57,39 +48,52 @@
 <!--- request hooks --->
     <cffunction access="public" name="onRequestStart" output=true>
         <cfargument name="targetPage" required="true">
+
         <cfargument name="resetAppVars" required="false" default="true">
         <cfargument name="debugSession" required="false" default="false">
 
         <cfif arguments.resetAppVars>
             <cfset this.resetAppVars()> 
         </cfif>
+        <cfset resetRequestVars()>
 
-        <cfif application.obj.Authenticator.status() eq 'loggedIn'>
-            <cfset request.db = session.vars.db>
+<!--- authentication was done here, pre request, to be transferred to page-wise--->
+<!--- here check for state of being authenticated --->
+<!--- 
+        <cfif application.obj.Security.status() eq 'loggedIn'>
+            <cfset request.db = session.data.db>
         </cfif>
+  --->
 
         <!--- domain/ application access rights --->
         <!--- need to check if session is actuall permitted --->
         <!--- check url.user = username hash() --->
-        <cfset request.web = application.web>
-        <cfset request.dir = application.dir>
-        <cfset request.railo = application.railo>
-        <cfset request.obj.router = application.obj.router>
-
         <cfset this.stampSequence(getFunctionCalledName())>
         <cfset this.printSequence()>
-    </cffunction>
+    </cffunction>   
 
     <cffunction access="public" name="onRequest" output=true>
         <cfargument name="targetPage" required="true">
-
-        <cfset route='login_home'>
-        <cfif NOT isScriptLegal(arguments.targetpage)> 
-            <cfset route='warning_illegalScriptName'>    
+        <cfif StructKeyExists(url,'route')>
+            <cfset var route = url.route>
+        <cfelse>
+            <cfset var route = 'login_home'>
         </cfif>
-        <cfset route = 'admin_home'>
-        <cfset request.obj.router.view(route)>
+        <cfset request.obj.Router.init(route,arguments.targetPage,request.obj.security)>
+        <cfset request.obj.Router.view(route)>
 
+        <cfset route = 'login_home'>
+        <cfset route = 'admin_home'>
+        <cfset route = 'db_home'>
+        <cfset route = 'login_home'>
+
+<!---
+        <cfset route = StructKeyExists(url,'route')?url.route:'login_home'>
+   --->
+<!--- <cfif session.data --->
+<!---
+        <cfset request.obj.router.view(route)>
+        ---> 
         <cfset this.stampSequence(getFunctionCalledName())>
         <cfset this.printSequence()>
     </cffunction>
@@ -97,12 +101,35 @@
     <cffunction access="public" name="onRequestEnd" output=true>
         <!--- domain event triggers --->
 
+<!--- 
+        <cfif application.obj.Security.status() eq 'unauthenticated'>
+            <cfset isAuthentic = application.obj.Security.authenticate(1,1)>
+            <cfif isAuthentic.flag>
+                <cfset session.data.user = 1>
+                <cfset session.data.appNow = 'tracker'>
+                <cfset session.data.envNow = 'live'>
+            <cfelse>
+                <cfset session.data.appNow = 'login'>
+                <cfset session.timeout = 1>
+            </cfif>
+
+            <cfset session.data.db = this.resetDB( session.data.appNow,session.data.envNow )>
+            <cfset session.db = this.resetDB( session.data.appNow,session.data.envNow )>
+        </cfif>
         <!--- logout operation --->
-        <cfif session.timeout eq 1> <cfset StructClear(session.vars)> </cfif>
+        <cfif session.timeout eq 1> <cfset StructClear(session.data)> </cfif>
         <cfset session.setMaxInactiveInterval(session.timeout)>
+  --->
+
 
         <cfset this.stampSequence(getFunctionCalledName())>
         <cfset this.printSequence()>
+
+<cfif StructKeyExists(request,'reroute')>
+    
+</cfif>
+
+<!--- redirect --->
     </cffunction>
 
 <!--- error hooks --->
@@ -263,29 +290,14 @@
             <cfset application.railo.web = "http://#application.web.host#/railo-context/admin/web.cfm">
             <cfset application.obj = {}>
             <cfset application.obj.Router = createObject('component','#application.dir.cfc#/Router')>
+            <cfset application.obj.Security = createObject('component','#application.dir.cfc#/Security')>
             <cfset application.obj.Sequencer = createObject('component','#application.dir.cfc#/Sequencer')>
-            <cfset application.obj.Authenticator = createObject('component','#application.dir.cfc#/Authenticator')>
     </cffunction>
-
-    <cffunction access="public" name="resetDB" output=false>
-        <cfargument name="app" required="true">
-        <cfargument name="environment" required="true">
-    
-        <cfset db = ''>
-        <cfif arguments.app eq 'tracker'>
-            <cfif arguments.environment eq 'live'>
-                <cfset db = 'tracker'>
-            <cfelseif arguments.environment eq 'training'>
-                <cfset db = 'tracker_testing'>
-            </cfif>
-        </cfif>
-
-        <cfreturn db>
-    </cffunction>
-
-    <cffunction access="public" name="isScriptLegal" output=false>
-        <cfargument name="accessedScript" required="true">
-        <cfreturn application.web.gateway eq arguments.accessedScript>
+    <cffunction name="resetRequestVars" output="true">
+        <cfset request.web = application.web>
+        <cfset request.dir = application.dir>
+        <cfset request.railo = application.railo>
+        <cfset request.obj = application.obj>
     </cffunction>
 
     <cffunction name="stampSequence" output="true">
@@ -309,5 +321,24 @@
             </cfif>
         </cfif>
     </cffunction>
+
+<!---
+    <cffunction access="public" name="resetDB" output=false>
+        <cfargument name="app" required="true">
+        <cfargument name="environment" required="false" default="">
+    
+        <cfset db = ''>
+        <cfif arguments.app eq 'tracker'>
+            <cfif arguments.environment eq 'live'>
+                <cfset db = 'tracker'>
+            <cfelseif arguments.environment eq 'training'>
+                <cfset db = 'tracker_testing'>
+            </cfif>
+        </cfif>
+
+        <cfreturn db>
+    </cffunction>
+   --->
+
 
 </cfcomponent>
