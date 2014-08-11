@@ -1,5 +1,9 @@
 <cfparam name="attributes.data" default="">
-<cfdump var=#attributes.data#>
-this is warnings home
-compile all warning msgs
-
+<div>
+    this is warnings home
+    compile all warning msgs
+</div>
+<cfset routes=ListToArray("#attributes.data#")>
+<cfloop array=#routes# index="item">
+<cfdump var=#item#>
+</cfloop>

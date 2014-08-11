@@ -1,2 +1,1 @@
-<cfmodule template='#request.dir.cfm#/sessionTracker.cfm'> 
-
+Welcome to the admin home page

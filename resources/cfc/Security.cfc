@@ -23,9 +23,8 @@
     <cffunction access="public" name="authenticate" output=true>
         <cfargument name="username" required="true">
         <cfargument name="password" required="true">
-        <cfargument name="database" required="true">
         <!--- 
-        <cfquery name="qry_identity" datasource="#arguments.database#">
+        <cfquery name="qry_identity" datasource="#request.db#">
             select * from sec0001 
             where vauserpwdhashed = <cfqueryparam CFSQLType='CF_SQL_VARCHAR' value=hash(arguments.username)>
             and vausidhashed =  <cfqueryparam CFSQLType='CF_SQL_VARCHAR' value=hash(arguments.password)
@@ -36,7 +35,10 @@
         <cfset isAuthentic = true>
         <cfset authenticity = {}>
         <cfset authenticity.flag = isAuthentic>
+<!--- 
         <cfset authenticity.data = qry_identity>
+--->
+        <cfset authenticity.data = 'asdf'>
         <cfreturn authenticity>
     </cffunction>
 </cfcomponent>
