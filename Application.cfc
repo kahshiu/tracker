@@ -83,6 +83,8 @@
 --->
         <cfset request.obj.Router.init(route,arguments.targetPage,request.obj.Security)>
         <cfset request.obj.Router.view(route)>
+<!---
+   --->
         <!--- domain event triggers --->
 
         <cfset this.stampSequence(getFunctionCalledName())>
@@ -91,8 +93,6 @@
 
     <cffunction access="public" name="onRequestEnd" output=true>
         <!--- security status checking --->
-<cfdump var=#request.obj.Security.status#>
-<!--- 
         <cfset currentStatus = request.obj.Security.status()>
         <cfif currentStatus eq 'loggedIn'>
             <cfset session.setting.appNow = 'tracker'>
@@ -107,7 +107,6 @@
                 <cfset StructClear(session.data)> 
         </cfif>
         <cfset session.setMaxInactiveInterval(session.setting.timeout)>
---->
 
         <cfset this.stampSequence(getFunctionCalledName())>
         <cfset this.printSequence()>

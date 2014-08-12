@@ -5,5 +5,6 @@
 </div>
 <cfset routes=ListToArray("#attributes.data#")>
 <cfloop array=#routes# index="item">
-<cfdump var=#item#>
+<cfinclude template=#item#>
 </cfloop>
+

@@ -6,7 +6,7 @@
         <cfreturn ListFindNoCase(arguments.allowedScript,arguments.accessedScript) gt 0>
     </cffunction>
 
-    <cffunction access="public" name="status" output=false>
+    <cffunction access="public" name="status" output=true>
         <cfset var status = ''>
         <cfif StructKeyExists(session,'data')>
             <cfif StructIsEmpty(session.data)> 
@@ -32,13 +32,12 @@
         <cfset isAuthentic = qry_identity.recordcount eq 1>
             --->
 <!--- kill when ready  --->
-        <cfset isAuthentic = true>
-        <cfset authenticity = {}>
-        <cfset authenticity.flag = isAuthentic>
 <!--- 
         <cfset authenticity.data = qry_identity>
 --->
-        <cfset authenticity.data = 'asdf'>
+        <cfset authenticity.flag = true>
+        <cfset authenticity.data = {}>
+        <cfset authenticity.data.identity = 'something'>
         <cfreturn authenticity>
     </cffunction>
 </cfcomponent>
