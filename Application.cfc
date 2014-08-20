@@ -1,4 +1,4 @@
-<cfcomponent output=true hint="" >
+<cfcomponent output=false hint="" >
 
     <cfset this.name = 'Mothership'>
     <cfset this.applicationTimeout=createTimeSpan(6,0,0,0)>
@@ -10,7 +10,7 @@
     <cfset this.clientStorage=false>
     <cfset this.scriptProtect=true>
 
-    <cfset variables.debug.sequence.activate = true>
+    <cfset variables.debug.sequence.activate = false>
     <cfset variables.debug.sequence.show = 'current'><!--- option to show stages (current, all) --->
 
 <!--- application hooks --->
@@ -56,6 +56,7 @@
 <cfset arguments.resetSessions = true>
 --->
 <cfset arguments.resetAppVars = true>
+
         <cfif arguments.resetAppVars>
             <cfset this.resetAppVars()> 
         </cfif>
@@ -76,31 +77,19 @@
             <cfset var route = 'login_home'>
         </cfif>
 <!--- 
-        <cfset route = 'login_home'>
-        <cfset route = 'admin_home'>
-        <cfset route = 'db_home'>
-        <cfset route = 'login_home'>
+<cfset route = 'admin_home'>
+<cfset route = 'db_home'>
+<cfset route = 'login_home'>
+<cfset route = 'login_ann'>
 --->
-        <cfset route = 'login_home'>
-        <cfset request.obj.Router.init(route,arguments.targetPage,request.obj.Security)>
-        <cfset request.obj.Router.view(route)>
-<cfexecute name="#request.dir.root#\test.bat"
-        variable="data"
-        timeout="10" />
-<!--- 
-<cfset data="">
-<cfexecute name="c:\windows\system32\cmd.exe"
-        arguments="/c set"
-        variable="data"
-        timeout="10" />
+        <cfset var body = ''>
+        <cfsavecontent variable="body">
+            <cfset request.obj.Router.init(route,arguments.targetPage,request.obj.Security)>
+            <cfset request.obj.Router.view(route)>
+        </cfsavecontent>
+        <cfinclude template="wrapper.cfm">
 
-<cfdump var="#data#">
-<cfdump var=#request.dir#>
---->
-<!---
-   --->
         <!--- domain event triggers --->
-
         <cfset this.stampSequence(getFunctionCalledName())>
         <cfset this.printSequence()>
     </cffunction>
@@ -116,6 +105,7 @@
             <cfset session.setting.appNow = 'login'>
             <cfset session.setting.timeout = 1>
         </cfif>
+
         <!--- logout operation --->
         <cfif StructKeyExists(session,'data') and session.setting.timeout eq 1> 
                 <cfset StructClear(session.data)> 
@@ -135,36 +125,36 @@
     <cffunction access="public" name="onError" output=true>
 <cfmodule template='/warnings/error.cfm'>
 <!--- 
-        <cfset application.obj.Router.view('warnings_error')>
+<cfset application.obj.Router.view('warnings_error')>
 --->
     </cffunction>
 
 <!--- custom functions --->
     <cffunction access="public" name="resetAppVars" output=false>
-            <cfset application.web = {}>
-            <cfset application.web.host = '#CGI.server_name#:#CGI.server_port#'>
-            <cfset application.web.gateway = '/index.cfm'>
-            <cfset application.web.URL = 'http://#application.web.host##application.web.gateway#?'>
-            <cfset application.web.latestSession = ''>
-            <cfset application.dir = {}>
-            <cfset application.dir.root = '#server.coldfusion.rootdir#'>
-            <cfset application.dir.cfc = '\resources\cfc'>
-            <cfset application.dir.cfm = '\resources\cfm'>
-            <cfset application.dir.css = '\resources\css'>
-            <cfset application.dir.js  = '\resources\js'>
-            <cfset application.railo = {}>
-            <cfset application.railo.server = "http://#application.web.host#/railo-context/admin/server.cfm">
-            <cfset application.railo.web = "http://#application.web.host#/railo-context/admin/web.cfm">
-            <cfset application.obj = {}>
-            <cfset application.obj.Router = createObject('component','#application.dir.cfc#/Router')>
-            <cfset application.obj.Security = createObject('component','#application.dir.cfc#/Security')>
-            <cfset application.obj.Sequencer = createObject('component','#application.dir.cfc#/Sequencer')>
+        <cfset application.web = {}>
+        <cfset application.web.host = '#CGI.server_name#:#CGI.server_port#'>
+        <cfset application.web.gateway = '/index.cfm'>
+        <cfset application.web.URL = 'http://#application.web.host##application.web.gateway#?'>
+        <cfset application.web.latestSession = ''>
+        <cfset application.dir = {}>
+        <cfset application.dir.root = '#server.coldfusion.rootdir#'>
+        <cfset application.dir.cfc = '\resources\cfc'>
+        <cfset application.dir.cfm = '\resources\cfm'>
+        <cfset application.dir.css = '\resources\css'>
+        <cfset application.dir.js  = '\resources\js'>
+        <cfset application.obj = {}>
+        <cfset application.obj.Router = createObject('component','#application.dir.cfc#/Router')>
+        <cfset application.obj.Security = createObject('component','#application.dir.cfc#/Security')>
+        <cfset application.obj.Sequencer = createObject('component','#application.dir.cfc#/Sequencer')>
+        <cfset application.railo = {}>
+        <cfset application.railo.server = "http://#application.web.host#/railo-context/admin/server.cfm">
+        <cfset application.railo.web = "http://#application.web.host#/railo-context/admin/web.cfm">
     </cffunction>
     <cffunction name="resetRequestVars" output="true">
         <cfset request.web = application.web>
         <cfset request.dir = application.dir>
-        <cfset request.railo = application.railo>
         <cfset request.obj = application.obj>
+        <cfset request.railo = application.railo>
         <cfset request.db = this.resetDB(session.setting.appNow,session.setting.envNow)>
     </cffunction>
     <cffunction access="public" name="resetDB" output=false>
