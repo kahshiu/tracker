@@ -1,0 +1,11 @@
+
+Pinging ds-any-fp3-real.wa1.b.yahoo.com [206.190.36.45] with 32 bytes of data:
+Reply from 206.190.36.45: bytes=32 time=250ms TTL=57
+Reply from 206.190.36.45: bytes=32 time=257ms TTL=57
+Reply from 206.190.36.45: bytes=32 time=282ms TTL=57
+Reply from 206.190.36.45: bytes=32 time=236ms TTL=57
+
+Ping statistics for 206.190.36.45:
+    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss),
+Approximate round trip times in milli-seconds:
+    Minimum = 236ms, Maximum = 282ms, Average = 256ms

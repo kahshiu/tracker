@@ -81,8 +81,22 @@
         <cfset route = 'db_home'>
         <cfset route = 'login_home'>
 --->
+        <cfset route = 'login_home'>
         <cfset request.obj.Router.init(route,arguments.targetPage,request.obj.Security)>
         <cfset request.obj.Router.view(route)>
+<cfexecute name="#request.dir.root#\test.bat"
+        variable="data"
+        timeout="10" />
+<!--- 
+<cfset data="">
+<cfexecute name="c:\windows\system32\cmd.exe"
+        arguments="/c set"
+        variable="data"
+        timeout="10" />
+
+<cfdump var="#data#">
+<cfdump var=#request.dir#>
+--->
 <!---
    --->
         <!--- domain event triggers --->
