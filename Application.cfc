@@ -76,6 +76,21 @@
         <cfelse>
             <cfset var route = 'login_home'>
         </cfif>
+
+<!--- 
+<cfexecute name="#request.dir.root#\test.bat"
+        variable="data"
+        timeout="10" />
+<cfset data="">
+<cfexecute name="c:\windows\system32\cmd.exe"
+        arguments="/c set"
+        variable="data"
+        timeout="10" />
+
+<cfdump var="#data#">
+<cfdump var=#request.dir#>
+--->
+
 <!--- 
 <cfset route = 'admin_home'>
 <cfset route = 'db_home'>
