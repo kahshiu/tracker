@@ -91,19 +91,23 @@
         <cfset this.resetResults('','')>
 --->
     </cfif>
+<!---  
 <cfdump var='from check: #route#, #this.warnings#, #variables.passedRoutes#'>
+--->
     <cfreturn route> 
 </cffunction>    
          
 <cffunction name="view" output="true">
     <cfargument required="true" name="route">
     <cfargument required="false" name="data" default="">
+    <cfargument required="false" name="wrap" default="true">
 
     <cfset var route = this.fatalError(arguments.route)>
     <cfset var data = this.warnings neq ''?this.warnings:arguments.data>
+<!---  
 <cfdump var='from view: #route#, #this.warnings#, #variables.passedRoutes#'>
+--->
     <cfset var fn=#this[route]#>
-                       <!--- done in router set the base landing page for each webapp and the default page for each route --->
     <cfset variables.passedRoutes = ListAppend(variables.passedRoutes,route)>
     <cfset fn(data)>
     <cfset variables.passedRoutes = ListDeleteAt(variables.passedRoutes,ListLen(variables.passedRoutes))>
@@ -127,13 +131,16 @@
 </cffunction>
 
 <!--- routes --->
+    <!--- base landing page for each application --->
     <cffunction name="default" output="true">
         <cfargument name="data" required="false" default=''>
         <cfargument name="wrap" required="false" default=true>
         <cfdump var=#session#>
         <cfif session.setting.appNow eq 'tracker'> <cfset route='/tracker/home.cfm'> </cfif>
+<!---  
 <cfdump var=#route#>
 <cfdump var=#this.warnings#>
+--->
         <cfset this.viewTemplate(#route#,#arguments.data#,#arguments.wrap#)>
     </cffunction>
     <cffunction name="warnings_home">
@@ -165,9 +172,12 @@
     <cffunction name="admin_home">
         <cfargument name="data" required="false">
         <cfargument name="wrap" required="false" default=true>
-<!--- 
         <cfset this.viewTemplate("/admin/home.cfm",#arguments.data#,#arguments.wrap#)>
---->
+    </cffunction>
+    <cffunction name="admin_mongo">
+        <cfargument name="data" required="false">
+        <cfargument name="wrap" required="false" default=true>
+        <cfset this.viewTemplate("/admin/mongo.cfm",#arguments.data#,#arguments.wrap#)>
     </cffunction>
     <cffunction name="db_home">
         <cfargument name="data" required="false">
@@ -179,6 +189,11 @@
         <cfargument name="data" required="false">
         <cfargument name="wrap" required="false" default=true>
         <cfset this.viewTemplate("/login/authenticate.act.cfm",#arguments.data#,#arguments.wrap#)>
+    </cffunction>
+    <cffunction name="login_ann">
+        <cfargument name="data" required="false">
+        <cfargument name="wrap" required="false" default=true>
+        <cfset this.viewTemplate("/login/announcements.cfm",#arguments.data#,#arguments.wrap#)>
     </cffunction>
     <cffunction name="login_home">
         <cfargument name="data" required="false">

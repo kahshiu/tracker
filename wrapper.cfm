@@ -1,36 +1,23 @@
-asdfasdfa
-<cfabort>
-
-<cfsilent>
-
-    <!--- security measures can go in here --->
-<!---
-    <cfset route=#request.fn.router(url.route)#> 
---->
-</cfsilent>
-
-asdf
-    <cfinclude template="router.cfm">
-<!---
 <cfoutput>
 <!DOCTYPE html>
 <html>
     <head>
         <title>Tracker</title>
-        <link rel="stylesheet" href="common/css/simplegrid.css">
-        <link rel="stylesheet" href="common/css/general.css">
-        <script type="text/javascript" src="common/js/underscore-min.js"></script>
-        <script type="text/javascript" src="common/js/crypto/sha.js"></script>
-        <script type="text/javascript" src="common/js/jquery-1.11.0.min.js"></script>
-        <script type="text/javascript" src="common/js/knockout-latest.js"></script>
-        <script type="text/javascript" src="common/js/knockout.validation.js"></script>
+        <link rel="stylesheet" href="#request.dir.css#/simplegrid.css">
+        <link rel="stylesheet" href="#request.dir.css#/general.css">
+        <script type="text/javascript" src="#request.dir.js#/underscore-min.js"></script>
+        <script type="text/javascript" src="#request.dir.js#/crypto/sha.js"></script>
+        <script type="text/javascript" src="#request.dir.js#/jquery-1.11.0.min.js"></script>
+        <script type="text/javascript" src="#request.dir.js#/knockout-latest.js"></script>
+        <script type="text/javascript" src="#request.dir.js#/knockout.validation.js"></script>
         <!-- custom validation template -->
         <script type="text/html" id="myValidationMsg">
            <div><em style="color:darkred" class="customMessage" data-bind='validationMessage: field'></em></div>
         </script>
         <script type="text/javascript" src="common/js/general.js"></script>
     </head>
-    <body>
+    <body> #body#
+<!---  
     <div class="grid-pad">
         <div class="col-2-12 sidebar">
             <div class="col-1-1 title bold">TRACKER</div>
@@ -92,7 +79,8 @@ asdf
             <div class="col-1-2 bT rightText">v1 tracker 2014</div>
         </div>
     </div>
+--->
     </body>
 </html>
 </cfoutput>
---->
+

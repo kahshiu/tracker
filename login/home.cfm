@@ -7,19 +7,34 @@
     </head>
 --->
     <body>
+<cfset caller.this.view('login_ann')>
+<cfoutput>
+
+</cfoutput>
+      <link rel="stylesheet" href="#request.dir.css#/main.css">
+        <form method="post" action="#request.web.url#route=login_authenticate_act">
+<div>
+    <div>
+Login for Stranger Who!
+    </div>
+    <div></div>
+    <div></div>
+</div>
+        <table>
+            <tr> <td colspan=2 align=center>Welcome, Stranger.</td> </tr>
+            <tr> <td>Name</td> <td> <input type="text" name="username"></td> </tr>
+            <tr> <td>Password</td> <td> <input type="text" name="userpwd"></td> </tr>
+            <tr> <td colspan=2 align=center><input type="submit" value="Login"></td> </tr>
+        </table>
+        </form>                    
+
+<!---  
     <div class="grid grid-pad">
         <div class="col-1-3"> 
 <!--- login panel --->
-        <form method="post" action="#request.web.url#route=login_authenticate_act">
-        <table>
-            <tr> <td colspan=2 align=center>Welcome, Stranger.</td> </tr>
-            <tr> <td>Name</td> <td>: <input type="text" name="username"></td> </tr>
-            <tr> <td>Password</td> <td>: <input type="text" name="userpwd"></td> </tr>
-            <tr> <td colspan=2 align=center><input type="submit" value="Login"></td> </tr>
-        </table>
-        </form>
+<!---  
+--->
         </div>
-        <div class="col-2-3"> 
 <!--- announcement --->
 <!--- 
         <cfquery name="qry_announcement" datasource="gatekeeper">
@@ -42,6 +57,7 @@
             </tbody>
         </table>
         </div>
+--->
 --->
     </div>
     </body>
