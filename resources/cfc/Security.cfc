@@ -23,24 +23,17 @@
     <cffunction access="public" name="authenticate" output=true>
         <cfargument name="username" required="true">
         <cfargument name="password" required="true">
-        <!--- 
-        <cfquery name="qry_identity" datasource="#request.db#">
-            select * from sec0001 
-            where vauserpwdhashed = <cfqueryparam CFSQLType='CF_SQL_VARCHAR' value=hash(arguments.username)>
-            and vausidhashed =  <cfqueryparam CFSQLType='CF_SQL_VARCHAR' value=hash(arguments.password)
-        </cfquery>
-        <cfset isAuthentic = qry_identity.recordcount eq 1>
-            --->
-<!--- kill when ready  --->
-<!--- 
-        <cfset authenticity.data = qry_identity>
---->
-        <cfset authenticity.flag = true>
+
+        <cfset authenticity.flag = false>
+
+<!--- perform actual identity checks  --->
         <cfset authenticity.data = {}>
         <cfif arguments.username eq 'admin'>
+            <cfset authenticity.flag = true>
             <cfset authenticity.data.identity.role = 'admin'>
-        <cfelse>
-            <cfset authenticity.data.identity.role = 'something'>
+        <cfelseif arguments.username eq 'user'>
+            <cfset authenticity.flag = true>
+            <cfset authenticity.data.identity.role = 'user'>
         </cfif>
         <cfreturn authenticity>
     </cffunction>

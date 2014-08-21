@@ -29,4 +29,3 @@ var mShout = #data#
 ko.applyBindings(mShout,document.getElementById('areaShout'))
 </script>
 </cfoutput>
-<cfset caller.this.view('admin_random')>

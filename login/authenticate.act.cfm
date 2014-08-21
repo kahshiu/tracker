@@ -6,6 +6,7 @@
         <cfset authenticity = request.obj.Security.authenticate(form.username,form.userpwd)>
     </cfif>
 </cfif>
+
 <cfif authenticity.flag> 
     <cfset session.data = authenticity.data> 
     <cfset request.redirect='#request.web.url#route=default&#session.urltoken#'> 

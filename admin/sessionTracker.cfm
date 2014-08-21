@@ -1,6 +1,34 @@
 <cfparam name="attributes.appname" default="#application.applicationName#">
 <cfparam name="attributes.print" default="sessionTracker">
-<!--- 
+<cfparam name="attributes.origId" default="">
+
+<cfif StructKeyExists(url,'origId') and url.origId neq ''>
+    <cfset attributes.origId = url.origId>
+<cfelse>
+    <cfset attributes.origId = '#session.cfid#|#session.cftoken#'>
+</cfif>
+
+<cfif StructKeyExists(url,'timeout')>
+    <cfif url.timeout eq 'long'> <cfset session.setting.overwrite = '2700'>
+    <cfelseif url.timeout eq 'med'> <cfset session.setting.overwrite = '120'>
+    <cfelseif url.timeout eq 'kill'> <cfset session.setting.overwrite = '1'>
+    </cfif>
+</cfif>
+
+<cfset targeturl = '#request.web.URL#route=admin_sessiontracker&origId=#attributes.origId#'>
+<cfset variables.isOwnSession = false>
+<cfset variables.isCurrentSession = false>
+
+
+<!---  
+<cffunction access="public" name="genRefererURL" output="true">
+    <cfargument required="false" name="structURL" default={}>
+    <cfargument required="false" name="addtoken" default="yes">
+    <cf
+    <cfreturn >
+</cffunction>
+--->
+<!--- /*{{{*/
 <cfparam name="attributes.print" default="sessionTrackerClass,sessionTracker,session">
 --->
 <!--- 
@@ -9,17 +37,7 @@ print is list of options:
 -sessionTracker
 -sessionClass
 -session
---->
-<cfif StructKeyExists(url,'timeout')>
-    <cfif url.timeout eq 'long'> <cfset session.timeout = '2700'>
-    </cfif>
-    <cfif url.timeout eq 'med'> <cfset session.timeout = '120'>
-    </cfif>
-    <cfif url.timeout eq 'short'> <cfset session.timeout = '30'>
-    </cfif>
-    <cfif url.timeout eq 'kill'> <cfset session.timeout = '1'>
-    </cfif>
-</cfif>
+--->/*}}}*/
 
 <cfif ListLen(attributes.print) gt 0>
     <!--- page model --->
@@ -60,89 +78,90 @@ print is list of options:
 
     <!--- List sessions --->
     <cfif ListFindNoCase(attributes.print,'sessionTracker') gt 0>
-    <br> <table border=1>
-            <thead>
-                <tr>
-                    <th>
-                        Session ID 
-                        &nbsp; &nbsp; &nbsp; &nbsp; (Total: #variables.total#)
-                        &nbsp; &nbsp; &nbsp; &nbsp; <a href='#application.web.URL#'>Create session</a>
-                    </th>
-                    <th colspan=2>Timing <br>(Now: #now()#)</th>
-                    <th>Timeout</th>
-                    <th>Session State</th>
-                </tr>
-            </thead>
+    <div class="grid grid-gutter-half">
+        <h4 class="grid-item large-one-whole"> Total running session: #variables.total#</h4>
 
-            <tbody>
-                <cfloop collection='#variables.sessions#' item="key">
-                    <cfset item = #variables.sessions[key]#>
+        <cfloop collection='#variables.sessions#' item="key">
+            <cfset item = #variables.sessions[key]#>
+            <cfif attributes.origId neq ''>
+                <cfif ListGetAt(attributes.origId,1,'|') eq item.cfid and ListGetAt(attributes.origId,2,'|') eq item.cftoken>
+                    <cfset variables.isOwnSession = true>
+                <cfelse>
+                    <cfset variables.isOwnSession = false>
+                </cfif>
+            <cfelse>
+                <cfset variables.isOwnSession = false>
+            </cfif>
+            <cfset variables.isCurrentSession = session.sessionid eq item.sessionid>
+            <hr>
+            <div class="grid-item large-one-half"> 
+                Key: [#key#] <br>
+                <cfif item.setting.timeout eq 1> 
+                    ?#item.urltoken# 
+                <cfelse> 
+                    <a href='#targeturl#&#item.urltoken#' class="button">?#item.urltoken#</a> 
+                </cfif>
+            </div>
+            <div class="grid-item large-one-half"> 
+                overwrite timeout:
+                <br>
+                <cfif NOT isOwnSession
+                    and item.setting.timeout neq 1 
+                    and NOT (StructKeyExists(item.setting,'overwrite') and item.setting.overwrite eq 1)>
+                    <a href="#targeturl#&timeout=kill&#item.urltoken#" class="button">1s</a>
+                    <a href="#targeturl#&timeout=med&#item.urltoken#" class="button">120s</a>
+                    <a href="#targeturl#&timeout=long&#item.urltoken#" class="button">2700s</a>
+                </cfif> 
+            </div>
+            <div class="grid-item large-one-half"> 
+                expire: #DateAdd('s',item.setting.timeout,item.lastvisit)#
+                <br>visited: #item.lastvisit# 
+                <br>created: #item.timecreated# 
+            </div>
+            <div class="grid-item large-one-half"> 
+                <div class="grid">
+                    <div class="grid-item large-one-half"> 
+                        Identity: 
+<!---  
+                        <cfif isDefined('item.data.identity')>
+                            <cfif StructKeyExists(item.data.identity,'vausmail')> #item.data.identity.vausmail#
+                            <cfelseif StructKeyExists(item.data.identity,'vausname')> #item.data.identity.vausname#
+                            <cfelse>unidentified
+                            </cfif>
+
+                            <cfif StructKeyExists(item.data.identity,'role')> (#item.data.identity.role#) 
+                            </cfif>
+                        </cfif>
+                        <br>status: <cfif StructIsEmpty(item.data)> Not Logged <cfelse> Logged in </cfif>
+--->
+                        <br>current timeout:
+                        <cfif StructKeyExists(item.setting,'overwrite')>
+                          #item.setting.overwrite#
+                        <cfelse>
+                          #item.setting.timeout#
+                        </cfif>
+                    </div>
+                    <div class="grid-item large-one-half"> 
+                        <cfif variables.isOwnSession> <span style="background:darkred;color:white">&nbsp;own session&nbsp;</span> </cfif>
+                        <cfif variables.isCurrentSession> <span style="background:darkred;color:white">&nbsp;current session&nbsp;</span> </cfif>
+                    </div>
+                </div>
+
+            </div>
+        </cfloop>
+    </div>
+    </cfif>
 
 <!---  
-                    <cfset isCurrentSession = item.sessionId eq session.sessionId>
-
-                    <cfset isFreshSession = StructKeyExists(session,'isFresh')>
-
-                    <cfset variables.text = ''>
-                    <cfset variables.text = ListAppend(variables.text,#isFreshSession?'&nbsp;Fresh Session&nbsp;':''#,' ')>
-                    <cfset variables.text = ListAppend(variables.text,#isCurrentSession?'&nbsp;Current Session&nbsp;':''#,' ')>
---->
-
-                    <tr>
-                        <td rowspan=4>
-                            [#key#]
-                            <cfif item.timeout eq 1>
-                                <br>?#item.urltoken#
-                            <cfelse>
-                                <br><a href='#application.web.URL##item.urltoken#'>?#item.urltoken#</a>
-                            </cfif>
-<!---  
-                            <cfif isCurrentSession>
-                                <br><span style="color:white;background-color:darkred;font-weight:bold">#variables.text#</span>
-                            </cfif>
---->
-                        </td>
-                        <td>Timeout</td>
-                        <td>: #item.timeout#</td>
-<!---  
-                        <td rowspan=4>
-                            <cfif item.timeout eq 1>
-                                [Killed]
-                            <cfelse>
-                                <a href="#application.web.URL##item.urltoken#&timeout=long">Long</a>
-                                <br><a href="#application.web.URL##item.urltoken#&timeout=med">Medium</a>
-                                <br><a href="#application.web.URL##item.urltoken#&timeout=short">Short</a>
-                                <br><a href="#application.web.URL##item.urltoken#&timeout=kill">Kill</a>
-                            </cfif>
-                        </td>
---->
-                        <td rowspan=4>
-                            <cfif StructKeyExists(item,'vars')>
-                                <cfif StructIsEmpty(item.vars)> Logged out [Struct cleared]
-                                <cfelse> Logged in [Struct remain populate]
-                                </cfif>
-                            <cfelse> Not logged in [Key not exists] 
-                            </cfif>
-                    </tr>
-                    <tr><td>expire</td>
-                        <td>: #DateAdd('s',item.timeout,item.lastvisit)#</td>
-                    </tr>
-                    <tr><td>last visit</td>
-                        <td>: #item.lastvisit#</td>
-                    </tr>
-                    <tr><td> creation </td>
-                        <td>: #variables.sessions[key]['timecreated']# </td>
-                    </tr>
-                </cfloop>
             </tbody>
         </table>
     </cfif>
-
     <cfif ListFindNoCase(attributes.print,'sessionClass') gt 0> 
     <br><cfdump var=#getMetadata(session)#> 
     </cfif>
     <cfif ListFindNoCase(attributes.print,'session') gt 0> 
     <br><cfdump var=#session#> 
     </cfif>
+--->
     </cfoutput>
 </cfif>

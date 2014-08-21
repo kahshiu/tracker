@@ -107,8 +107,7 @@
 
             <cfif session.data.identity.role eq "admin">
                 <cfset session.setting.appNow = 'admin'>
-
-            <cfelseif session.data.identity.role eq 'user'>
+            <cfelse>
                 <cfset session.setting.appNow = 'tracker'>
                 <cfset session.setting.envNow = 'live'>
             </cfif>
@@ -118,11 +117,17 @@
             <cfset session.setting.appNow = 'login'>
             <cfset session.setting.timeout = 1>
         </cfif>
+        <cfif StructKeyExists(session.setting,'overwrite')>
+            <cfset session.setting.timeout = session.setting.overwrite>
+            <cfset StructDelete(session.setting,'overwrite')>
+        </cfif>
 
         <!--- logout operation --->
+<!---  
         <cfif StructKeyExists(session,'data') and session.setting.timeout eq 1> 
-                <cfset StructClear(session.data)> 
+                <cfset StructDelete(session.data)> 
         </cfif>
+--->
         <cfset session.setMaxInactiveInterval(session.setting.timeout)>
 
         <cfset this.stampSequence(getFunctionCalledName())>
@@ -138,7 +143,8 @@
     <cffunction access="public" name="onError" output=true>
         <cfargument required="true" name="Exception"> 
         <cfargument required="true" name="EventName"> 
-        <cfmodule template='/warnings/error.cfm' exception=#exception# eventname=#eventname#>
+<cfdump var=#exception#>
+<cfdump var=#eventname#>
     </cffunction>
 
 <!--- custom functions --->
