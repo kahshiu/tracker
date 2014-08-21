@@ -10,7 +10,7 @@
     <cfset this.clientStorage=false>
     <cfset this.scriptProtect=true>
 
-    <cfset variables.debug.sequence.activate = false>
+    <cfset variables.debug.sequence.activate = true>
     <cfset variables.debug.sequence.show = 'current'><!--- option to show stages (current, all) --->
 
 <!--- application hooks --->
@@ -78,31 +78,22 @@
         </cfif>
 
 <!--- 
-<cfexecute name="#request.dir.root#\test.bat"
-        variable="data"
-        timeout="10" />
+<cfexecute name="#request.dir.root#\test.bat" variable="data" timeout="10" />
 <cfset data="">
-<cfexecute name="c:\windows\system32\cmd.exe"
-        arguments="/c set"
-        variable="data"
-        timeout="10" />
-
+<cfexecute name="c:\windows\system32\cmd.exe" arguments="/c set" variable="data" timeout="10" />
 <cfdump var="#data#">
 <cfdump var=#request.dir#>
 --->
-
-<!--- 
-<cfset route = 'admin_home'>
-<cfset route = 'db_home'>
-<cfset route = 'login_home'>
-<cfset route = 'login_ann'>
---->
         <cfset var body = ''>
-        <cfsavecontent variable="body">
-            <cfset request.obj.Router.init(route,arguments.targetPage,request.obj.Security)>
-            <cfset request.obj.Router.view(route)>
-        </cfsavecontent>
-        <cfinclude template="wrapper.cfm">
+        <cfset request.obj.Router.init(route,arguments.targetPage,request.obj.Security)>
+        <cfset temp = request.obj.Router.view(route,false)>
+
+        <cfif FileExists('#request.dir.root#\wrapper.cfm')>
+            <cfmodule template="wrapper.cfm" 
+                body=#temp# 
+                nojs=#request.obj.Router.nojs(route)# 
+                nocss=#request.obj.Router.nocss(route)#>
+        </cfif>
 
         <!--- domain event triggers --->
         <cfset this.stampSequence(getFunctionCalledName())>
@@ -113,8 +104,15 @@
         <!--- security status checking --->
         <cfset currentStatus = request.obj.Security.status()>
         <cfif currentStatus eq 'loggedIn'>
-            <cfset session.setting.appNow = 'tracker'>
-            <cfset session.setting.envNow = 'live'>
+
+            <cfif session.data.identity.role eq "admin">
+                <cfset session.setting.appNow = 'admin'>
+
+            <cfelseif session.data.identity.role eq 'user'>
+                <cfset session.setting.appNow = 'tracker'>
+                <cfset session.setting.envNow = 'live'>
+            </cfif>
+
             <cfset session.setting.timeout = 2700>
         <cfelse>
             <cfset session.setting.appNow = 'login'>
@@ -138,14 +136,13 @@
 
 <!--- error hooks --->
     <cffunction access="public" name="onError" output=true>
-<cfmodule template='/warnings/error.cfm'>
-<!--- 
-<cfset application.obj.Router.view('warnings_error')>
---->
+        <cfargument required="true" name="Exception"> 
+        <cfargument required="true" name="EventName"> 
+        <cfmodule template='/warnings/error.cfm' exception=#exception# eventname=#eventname#>
     </cffunction>
 
 <!--- custom functions --->
-    <cffunction access="public" name="resetAppVars" output=false>
+    <cffunction access="public" name="resetAppVars" output=true>
         <cfset application.web = {}>
         <cfset application.web.host = '#CGI.server_name#:#CGI.server_port#'>
         <cfset application.web.gateway = '/index.cfm'>
@@ -157,11 +154,9 @@
         <cfset application.dir.cfm = '\resources\cfm'>
         <cfset application.dir.css = '\resources\css'>
         <cfset application.dir.js  = '\resources\js'>
-        <cfset application.obj = {}>
-        <cfset application.obj.Router = createObject('component','#application.dir.cfc#/Router')>
-        <cfset application.obj.Security = createObject('component','#application.dir.cfc#/Security')>
-        <cfset application.obj.Sequencer = createObject('component','#application.dir.cfc#/Sequencer')>
+        <cfset application.obj = populateCFCs()>
         <cfset application.railo = {}>
+        <cfset application.railo.home = "http://#application.web.host#/railo.index.cfm">
         <cfset application.railo.server = "http://#application.web.host#/railo-context/admin/server.cfm">
         <cfset application.railo.web = "http://#application.web.host#/railo-context/admin/web.cfm">
     </cffunction>
@@ -169,7 +164,6 @@
         <cfset request.web = application.web>
         <cfset request.dir = application.dir>
         <cfset request.obj = application.obj>
-        <cfset request.railo = application.railo>
         <cfset request.db = this.resetDB(session.setting.appNow,session.setting.envNow)>
     </cffunction>
     <cffunction access="public" name="resetDB" output=false>
@@ -180,12 +174,25 @@
             <cfif arguments.environment eq 'live'>         <cfset db = 'tracker'>
             <cfelseif arguments.environment eq 'training'> <cfset db = 'tracker_testing'>
             </cfif>
-        <cfelseif arguments.app eq 'login'>
+        <cfelseif arguments.app eq 'login' OR arguments.app eq 'admin'>
             <cfset db = 'login'>
         </cfif>
         <cfreturn db>
     </cffunction>
 
+    <cffunction access="public" name="populateCFCs" output="true">
+        <cfargument required="false" name="cfcPath" default="#application.dir.cfc#">
+        <cfargument required="false" name="rootPath" default="#application.dir.root#">
+        <cfset temp = {}>
+        <cfset REroot = REReplace('#arguments.rootPath#','\\','\\','all')>
+        <cfdirectory directory="#arguments.cfcPath#" action="list" filter="*.cfc" name="cfc" recurse="true" type="file">
+        <cfloop query="cfc">
+            <cfset cfcname = REReplace(name,'(\w+).cfc','\1')>
+            <cfset cfcDir = REReplace(directory,'#RERoot#','','all')>
+            <cfobject type="component" component="#cfcDir#\#cfcname#" name="temp.#cfcname#">
+        </cfloop>
+        <cfreturn temp>
+    </cffunction>
     <cffunction name="stampSequence" output="true">
         <cfargument required="true" name="functionName" default="">
         <cfif variables.debug.sequence.activate>

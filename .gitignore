@@ -1,6 +1,6 @@
 *.sw*
-*.*~
+*~
 WEB-INF/
 res/
-junk~
 .idea/
+

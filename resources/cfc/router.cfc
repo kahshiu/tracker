@@ -4,9 +4,28 @@
 <cfset variables.targetScript = ''>
 <cfset variables.targetRoute = ''>
 <cfset variables.passedRoutes = ''>
-<cfset this.warnings = ''>
 
-<cffunction name="init" output="false">
+<!--- page mappings --->
+<cfset variables.routes = {}>
+<cfset variables.routes.warnings_home          = '/warnings/home.cfm'>
+<cfset variables.routes.warnings_illegalAccess = '/warnings/illegalAccess.cfm'>
+<cfset variables.routes.warnings_invalidPage   = '/warnings/invalidPage.cfm'>
+<cfset variables.routes.warnings_recursivePage = '/warnings/recursivePage.cfm'>
+<cfset variables.routes.warnings_refusedPage   = '/warnings/refusedPage.cfm'>
+
+<cfset variables.routes.admin_random           = '/admin/random.cfm'>
+<cfset variables.routes.admin_home             = '/admin/home.cfm'>
+<cfset variables.routes.admin_r_index          = '/admin/railo.index.cfm'>
+<cfset variables.routes.admin_sessiontracker   = '/admin/sessiontracker.cfm'>
+<cfset variables.routes.admin_mongo            = '/admin/mongo.cfm'>
+<cfset variables.routes.db_home                = '/admin/db/home.cfm'>
+
+<cfset variables.routes.login_authenticate_act = '/login/authenticate.act.cfm'>
+<cfset variables.routes.login_ann              = '/login/announcements.cfm'>
+<cfset variables.routes.login_home             = '/login/home.cfm'>
+<cfset variables.routes.tracker_home           = '/tracker/home.cfm'>
+
+<cffunction name="init" output="true">
     <cfargument required="true" name="targetRoute"> 
     <cfargument required="true" name="targetScript">
     <cfargument required="true" name="securityObj">
@@ -29,181 +48,109 @@
     <cfreturn variables.targetRoute = arguments.targetRoute>
 </cffunction>
 
-<cffunction access="public" name="resetResults" output=true>
-    <cfargument required="false" name="passedRoutes" default="-1">
-    <cfargument required="false" name="warnings" default="-1">
-    <cfif arguments.passedRoutes neq -1> 
-        <cfset variables.passedRoutes = arguments.passedRoutes> 
-    </cfif>
-    <cfif this.warnings neq -1> 
-        <cfset this.warnings = arguments.warnings> 
-    </cfif>
-</cffunction>
-
-<cffunction name="isRouteFunctioned" output="true">
-    <cfargument required="false" name="targetRoute" default="#variables.targetRoute#">
-
-    <cfset var isFunctioned = false>
-    <cfset var classFunctions = getmetadata(this).functions>
-    <cfloop array=#classFunctions# index="currentFunction">
-        <cfif currentFunction.name eq arguments.targetRoute> 
-            <cfset isFunctioned = true> <cfbreak> 
-        </cfif>
-    </cfloop>
-    <cfreturn isFunctioned>
-</cffunction>
-
 <cffunction name="isRouteRecursive" output="true">
     <cfargument required="true" name="targetRoute">
-    <cfargument required="false" name="passedRoutes" default="#variables.passedRoutes#">
-    <cfset var result = ListFindNoCase(arguments.passedRoutes,arguments.targetRoute) gt 0>
-<!---  
-    <cfset resetResults('')>
---->
+
+    <cfset var result = false>
+    <cfif ListFindNoCase(variables.passedRoutes,arguments.targetRoute) eq 0>
+        <cfset variables.passedRoutes = ListAppend(variables.passedRoutes,arguments.targetRoute)>
+    <cfelse>
+        <cfset var result = true>
+    </cfif>
+
     <cfreturn result> 
 </cffunction>
 
-<cffunction name="fatalError" output="true">
-    <cfargument required="true" name="targetRoute">
-    <cfargument required="false" name="targetScript" default="#variables.targetScript#">
+<cffunction name="routingError" output="true">
+    <cfargument required="true" name="route">
 
-    <cfif NOT variables.security.isLegalScript(arguments.targetScript)>
-        <cfset this.warnings = ListAppend(this.warnings,'/warnings/illegalAcces.cfm')>
+<!---  
+    <cfif variables.security.viaGateways(variables.targetScript)>
+        <cfreturn 'warnings_illegalAccess'>
     </cfif>
-    <cfif NOT this.isRouteFunctioned()>
-        <cfset this.warnings = ListAppend(this.warnings,'/warnings/invalidPage.cfm')>
-    </cfif>
-    <cfif this.isRouteRecursive(arguments.targetRoute)>
-        <cfset this.warnings = ListAppend(this.warnings,'/warnings/recursivePage.cfm')>
-    </cfif>
+
     <cfif NOT(
-            variables.security.status() eq 'loggedIn'
-            OR (ListFindNoCase('unauthenticated,loggedOut',variables.security.status()) gt 0 and REFindNoCase('(^login_)|(^warnings)',arguments.targetRoute) gt 0 )
+            (ListFindNoCase('unauthenticated,loggedOut',variables.security.status()) gt 0 
+            AND REFindNoCase('(^login_)|(^warnings)',arguments.route) gt 0)
+            OR variables.security.status() eq 'loggedIn'
         )>
-        <cfset this.warnings = ListAppend(this.warnings,'/warnings/refusedPage.cfm')>
+        <cfreturn 'warnings_refusedPage'>
     </cfif>
 
-    <cfif this.warnings eq ''>
-        <cfset route = arguments.targetRoute>
-    <cfelse>
-        <cfset route = 'warnings_home'>
-<!---  
-        <cfset this.resetResults('','')>
---->
+    <cfif NOT StructKeyExists(variables.routes,'#arguments.route#')>
+        <cfreturn 'warnings_invalidPage'>
     </cfif>
-<!---  
-<cfdump var='from check: #route#, #this.warnings#, #variables.passedRoutes#'>
 --->
-    <cfreturn route> 
+
+    <cfif this.isRouteRecursive(arguments.route)>
+        <cfreturn 'warnings_recursivePage'>
+    </cfif>
+    <cfreturn ''>
 </cffunction>    
          
 <cffunction name="view" output="true">
     <cfargument required="true" name="route">
+    <cfargument required="false" name="render" default="true">
     <cfargument required="false" name="data" default="">
     <cfargument required="false" name="wrap" default="true">
 
-    <cfset var route = this.fatalError(arguments.route)>
-    <cfset var data = this.warnings neq ''?this.warnings:arguments.data>
-<!---  
-<cfdump var='from view: #route#, #this.warnings#, #variables.passedRoutes#'>
---->
-    <cfset var fn=#this[route]#>
-    <cfset variables.passedRoutes = ListAppend(variables.passedRoutes,route)>
-    <cfset fn(data)>
-    <cfset variables.passedRoutes = ListDeleteAt(variables.passedRoutes,ListLen(variables.passedRoutes))>
+    <cfset var path.errored = this.routingError(arguments.route)>
+    <cfset var path.relative = this.mapping(path.errored neq ''? path.errored:arguments.route)>
+    <cfset var path.extract = REReplace(path.relative,'/[^/]+\.cfm','')>  
+
+    <cfset var tempData = path.errored neq ''?arguments.data:'error'>
+    <cfset var tempBody=''>
+    <cfsavecontent variable='tempBody'> 
+        <cfmodule template=#path.relative# data=#tempData#> 
+    </cfsavecontent>
+    <cfif arguments.wrap and FileExists('#request.dir.root##path.extract#\wrapper.cfm')>
+        <cfsavecontent variable='tempBody'> 
+            <cfmodule template="#path.extract#\wrapper.cfm" body=#tempBody#>
+        </cfsavecontent>
+    </cfif>
+
+    <cfif arguments.render>
+        <cfoutput> #tempBody# </cfoutput>
+        <cfset tempBody = ''> 
+    </cfif>
+    <cfreturn tempBody>
 </cffunction>
           
-<cffunction name="viewTemplate" output="true">
-    <cfargument required="true" name="templatePath" default="false">
-    <cfargument required="true" name="templateData" default="false">
-    <cfargument required="false" name="templateWrapper" default="true">
-
-    <cfset parentPath = REReplace(arguments.templatePath,'/[^/]+\.cfm','')>  
-    <cfoutput>
-    <cfif arguments.templateWrapper and FileExists('#request.dir.root##parentPath#\header.cfm')>
-        <cfmodule template="#parentPath#/header.cfm">
+<cffunction access="public" name="mapping" output="true">
+    <cfargument required="true" name="route" default="">
+    <cfset path = ''> 
+    <cfif arguments.route eq 'default'>
+        <cfif session.setting.appNow eq 'tracker'> 
+            <cfset path='/tracker/home.cfm'>
+        <cfelseif session.setting.appNow eq 'admin'> 
+            <cfset path='/admin/home.cfm'>
+        </cfif>
+    <cfelse>
+        <cfset path = variables.routes['#arguments.route#']>
     </cfif>
-    <cfmodule template=#arguments.templatePath# data=#arguments.templateData#> 
-    <cfif arguments.templateWrapper and FileExists('#request.dir.root##parentPath#\footer.cfm')>
-        <cfmodule template="#parentPath#/footer.cfm">
-    </cfif>
-    </cfoutput>
+    <cfreturn path>
 </cffunction>
 
-<!--- routes --->
-    <!--- base landing page for each application --->
-    <cffunction name="default" output="true">
-        <cfargument name="data" required="false" default=''>
-        <cfargument name="wrap" required="false" default=true>
-        <cfdump var=#session#>
-        <cfif session.setting.appNow eq 'tracker'> <cfset route='/tracker/home.cfm'> </cfif>
-<!---  
-<cfdump var=#route#>
-<cfdump var=#this.warnings#>
---->
-        <cfset this.viewTemplate(#route#,#arguments.data#,#arguments.wrap#)>
-    </cffunction>
-    <cffunction name="warnings_home">
-        <cfargument name="data" required="false" default=''>
-        <cfargument name="wrap" required="false" default=true>
-        <cfset this.viewTemplate('/warnings/home.cfm',#arguments.data#,#arguments.wrap#)>
-    </cffunction>
-    <cffunction name="warnings_illegalAccess">
-        <cfargument name="data" required="false">
-        <cfargument name="wrap" required="false" default=true>
-        <cfset this.viewTemplate("/warnings/illegalAccess.cfm",#arguments.data#,#arguments.wrap#)>
-    </cffunction>
-    <cffunction name="warnings_invalidPage">
-        <cfargument name="data" required="false">
-        <cfargument name="wrap" required="false" default=true>
-        <cfset this.viewTemplate("/warnings/invalidPage.cfm",#arguments.data#,#arguments.wrap#)>
-    </cffunction>
-    <cffunction name="warnings_recursivePage">
-        <cfargument name="data" required="false">
-        <cfargument name="wrap" required="false" default=true>
-        <cfset this.viewTemplate("/warnings/recursivePage.cfm",#arguments.data#,#arguments.wrap#)>
-    </cffunction>
-    <cffunction name="warnings_refusedPage">
-        <cfargument name="data" required="false">
-        <cfargument name="wrap" required="false" default=true>
-        <cfset this.viewTemplate("/warnings/refusedPage.cfm",#arguments.data#,#arguments.wrap#)>
-    </cffunction>
+<cffunction access="public" name="nojs" output="true">
+    <cfargument required="true" name="route">
 
-    <cffunction name="admin_home">
-        <cfargument name="data" required="false">
-        <cfargument name="wrap" required="false" default=true>
-        <cfset this.viewTemplate("/admin/home.cfm",#arguments.data#,#arguments.wrap#)>
-    </cffunction>
-    <cffunction name="admin_mongo">
-        <cfargument name="data" required="false">
-        <cfargument name="wrap" required="false" default=true>
-        <cfset this.viewTemplate("/admin/mongo.cfm",#arguments.data#,#arguments.wrap#)>
-    </cffunction>
-    <cffunction name="db_home">
-        <cfargument name="data" required="false">
-        <cfargument name="wrap" required="false" default=true>
-        <cfset this.viewTemplate("/admin/db/home.cfm",#arguments.data#,#arguments.wrap#)>
-    </cffunction>
+    <cfset var nojs='sha'>
+    <cfif arguments.route eq 'login_home'> 
+        <cfset nojs=request.obj.utils.ListRemoveValues(nojs,'sha')>
+    </cfif>
 
-    <cffunction name="login_authenticate_act">
-        <cfargument name="data" required="false">
-        <cfargument name="wrap" required="false" default=true>
-        <cfset this.viewTemplate("/login/authenticate.act.cfm",#arguments.data#,#arguments.wrap#)>
-    </cffunction>
-    <cffunction name="login_ann">
-        <cfargument name="data" required="false">
-        <cfargument name="wrap" required="false" default=true>
-        <cfset this.viewTemplate("/login/announcements.cfm",#arguments.data#,#arguments.wrap#)>
-    </cffunction>
-    <cffunction name="login_home">
-        <cfargument name="data" required="false">
-        <cfargument name="wrap" required="false" default=true>
-        <cfset this.viewTemplate("/login/home.cfm",#arguments.data#,#arguments.wrap#)>
-    </cffunction>
+    <cfreturn nojs>
+</cffunction>
 
-    <cffunction name="tracker_home">
-        <cfargument name="data" required="false">
-        <cfargument name="wrap" required="false" default=true>
-        <cfset this.viewTemplate("/tracker/home.cfm",#arguments.data#,#arguments.wrap#)>
-    </cffunction>
+<cffunction access="public" name="nocss" output="true">
+    <cfargument required="true" name="route">
+
+    <cfset var nocss=''>
+    <cfif arguments.route eq 'admin_r_index'> 
+        <cfset nocss=ListAppend(nocss,'cardinal')>
+    </cfif>
+
+    <cfreturn nocss>
+</cffunction>
+
 </cfcomponent>

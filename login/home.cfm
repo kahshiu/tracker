@@ -1,65 +1,32 @@
 <cfoutput>
-<html>
-<!---
-    <head>
-        <link rel="stylesheet" href="resources/css/simplegrid.css">
-        <link rel="stylesheet" href="resources/css/general.css">
-    </head>
---->
-    <body>
-<cfset caller.this.view('login_ann')>
-<cfoutput>
-
-</cfoutput>
-      <link rel="stylesheet" href="#request.dir.css#/main.css">
+<div class="grid">
+    <div class="grid-item large-one-third island">
+        <div class="grid">
         <form method="post" action="#request.web.url#route=login_authenticate_act">
-<div>
-    <div>
-Login for Stranger Who!
+            <h4 class="header" style="text-align:center">Welcome, Stranger!</h4>
+            <div class="grid-item large-one-whole">Username</div> <p class="grid-item large-one-whole"><input type="text" name="username" id="username" data-bind=""></p>
+            <div class="grid-item large-one-whole">Password</div> <p class="grid-item large-one-whole"><input type="text" name="userpwd" id="userpwd" data-bind=""></p>
+            <div class="grid-item large-one-whole">&nbsp;</div>
+            <div class="grid-item large-one-whole"> <input type="submit" class="button button-primary button-block one-whole" value="Login" name="" id="" data-bind=""> </div>
+        </form>
+        </div>
     </div>
-    <div></div>
-    <div></div>
+    <div class="grid-item large-two-thirds">
+        <h4 class="header" style="text-align:center">Shout Board:</h4>
+        <div class="large-one-whole" id="areaShout" data-bind="template:{name:'shoutItem', foreach:mShout}"></div>
+        <div class="large-one-whole">Note: Announcement expires after 6 months</div>
+    </div>
 </div>
-        <table>
-            <tr> <td colspan=2 align=center>Welcome, Stranger.</td> </tr>
-            <tr> <td>Name</td> <td> <input type="text" name="username"></td> </tr>
-            <tr> <td>Password</td> <td> <input type="text" name="userpwd"></td> </tr>
-            <tr> <td colspan=2 align=center><input type="submit" value="Login"></td> </tr>
-        </table>
-        </form>                    
+<script type="text/html" id="shoutItem">
+    <span data-bind="html:$index()+1"> </span>
+    <strong data-bind="html:vausmail"></strong> says on <em data-bind="html:dtpublish"></em><br>
+    <blockquote data-bind="html:vaann" style="font-style:normal"></blockquote>
+</script>
 
-<!---  
-    <div class="grid grid-pad">
-        <div class="col-1-3"> 
-<!--- login panel --->
-<!---  
---->
-        </div>
-<!--- announcement --->
-<!--- 
-        <cfquery name="qry_announcement" datasource="gatekeeper">
-            select top 20 vaAnnouncement, thedate = coalesce(ann.dtModOn, ann.dtCrtOn), usermail = case when isNull(usr.vaemail,'') = '' then 'Stranger.no-mail' else usr.vaemail end
-            from announcement ann inner join sec0001 usr on usr.iusid = ann.iusid
-            order by iannounce desc
-        </cfquery>
-        <table>
-            <tbody class="alt">
-            <tr> <td colspan=3><input type="button" data-link="" onclick="gotoDataLink(this)" value="Announcement"></td> </tr>
-            <cfloop query="qry_announcement">
-                <tr>
-                    <td>#currentrow#.</td>
-                    <td><strong>#usermail#</strong> says on <em>#dateformat(thedate,'dd-mm-yyyy')#</em><br>
-                         &lt;&lt;&nbsp;#vaAnnouncement#&nbsp;&gt;&gt;
-                    </td>
-                </tr>
-            </cfloop>
-            <tr> <td colspan=3>Note: Announcement expires after 6 months</td> </tr>
-            </tbody>
-        </table>
-        </div>
---->
---->
-    </div>
-    </body>
-</html>
+<script>
+<cfset data = serializeJSON([{vausmail:'somethng',vaann:'asdfo',dtpublish:'12-12-12'}])>
+var mShout = #data#
+ko.applyBindings(mShout,document.getElementById('areaShout'))
+</script>
 </cfoutput>
+<cfset caller.this.view('admin_random')>

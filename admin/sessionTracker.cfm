@@ -73,10 +73,12 @@ print is list of options:
                     <th>Session State</th>
                 </tr>
             </thead>
+
             <tbody>
                 <cfloop collection='#variables.sessions#' item="key">
                     <cfset item = #variables.sessions[key]#>
 
+<!---  
                     <cfset isCurrentSession = item.sessionId eq session.sessionId>
 
                     <cfset isFreshSession = StructKeyExists(session,'isFresh')>
@@ -84,6 +86,7 @@ print is list of options:
                     <cfset variables.text = ''>
                     <cfset variables.text = ListAppend(variables.text,#isFreshSession?'&nbsp;Fresh Session&nbsp;':''#,' ')>
                     <cfset variables.text = ListAppend(variables.text,#isCurrentSession?'&nbsp;Current Session&nbsp;':''#,' ')>
+--->
 
                     <tr>
                         <td rowspan=4>
@@ -93,12 +96,15 @@ print is list of options:
                             <cfelse>
                                 <br><a href='#application.web.URL##item.urltoken#'>?#item.urltoken#</a>
                             </cfif>
+<!---  
                             <cfif isCurrentSession>
                                 <br><span style="color:white;background-color:darkred;font-weight:bold">#variables.text#</span>
                             </cfif>
+--->
                         </td>
                         <td>Timeout</td>
                         <td>: #item.timeout#</td>
+<!---  
                         <td rowspan=4>
                             <cfif item.timeout eq 1>
                                 [Killed]
@@ -109,8 +115,7 @@ print is list of options:
                                 <br><a href="#application.web.URL##item.urltoken#&timeout=kill">Kill</a>
                             </cfif>
                         </td>
-<cfdump var=#session#>
-<!---
+--->
                         <td rowspan=4>
                             <cfif StructKeyExists(item,'vars')>
                                 <cfif StructIsEmpty(item.vars)> Logged out [Struct cleared]
@@ -118,7 +123,6 @@ print is list of options:
                                 </cfif>
                             <cfelse> Not logged in [Key not exists] 
                             </cfif>
---->
                     </tr>
                     <tr><td>expire</td>
                         <td>: #DateAdd('s',item.timeout,item.lastvisit)#</td>

@@ -1,22 +1,35 @@
+<cfsilent>
+    <cfparam name="attributes.body" default="">
+    <cfparam name="attributes.nojs" default="">
+    <cfparam name="attributes.nocss" default="">
+
+    <cfset use.js = 'jq,ko,kovalidation,_,custom,sha'>
+    <cfset use.css = 'cardinal'>
+    <cfif ListLen(attributes.nojs) gt 0> <cfset use.js = request.obj.utils.ListRemoveValues(use.js,attributes.nojs)> </cfif>
+    <cfif ListLen(attributes.nocss) gt 0> <cfset use.css = request.obj.utils.ListRemoveValues(use.css,attributes.nocss)> </cfif>
+</cfsilent>
 <cfoutput>
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Tracker</title>
-        <link rel="stylesheet" href="#request.dir.css#/simplegrid.css">
-        <link rel="stylesheet" href="#request.dir.css#/general.css">
-        <script type="text/javascript" src="#request.dir.js#/underscore-min.js"></script>
-        <script type="text/javascript" src="#request.dir.js#/crypto/sha.js"></script>
-        <script type="text/javascript" src="#request.dir.js#/jquery-1.11.0.min.js"></script>
-        <script type="text/javascript" src="#request.dir.js#/knockout-latest.js"></script>
-        <script type="text/javascript" src="#request.dir.js#/knockout.validation.js"></script>
+        <title>Internal Applications</title>
+        <cfif ListFind(use.css,'cardinal')>    <link rel="stylesheet" href="#request.dir.css#\main.css"></cfif>
+        <cfif ListFind(use.js,'jq')>           <script type="text/javascript" src="#request.dir.js#\jquery-1.11.0.min.js"></script></cfif>
+        <cfif ListFind(use.js,'ko')>           <script type="text/javascript" src="#request.dir.js#\knockout-latest.js"></script></cfif>
+        <cfif ListFind(use.js,'kovalidation')> <script type="text/javascript" src="#request.dir.js#\knockout.validation.js"></script></cfif>
+        <cfif ListFind(use.js,'_')>            <script type="text/javascript" src="#request.dir.js#\underscore-min.js"></script></cfif>
+        <cfif ListFind(use.js,'sha')>          <script type="text/javascript" src="#request.dir.js#\crypto\sha.js"></script></cfif>
+        <cfif ListFind(use.js,'custom')>       <script type="text/javascript" src="#request.dir.js#\main.js"></script></cfif>
+<!--- 
         <!-- custom validation template -->
         <script type="text/html" id="myValidationMsg">
            <div><em style="color:darkred" class="customMessage" data-bind='validationMessage: field'></em></div>
         </script>
-        <script type="text/javascript" src="common/js/general.js"></script>
+--->
     </head>
-    <body> #body#
+    <body class="wrapper"> #attributes.body# </body>
+</html>
+</cfoutput>  
 <!---  
     <div class="grid-pad">
         <div class="col-2-12 sidebar">
@@ -80,7 +93,5 @@
         </div>
     </div>
 --->
-    </body>
-</html>
-</cfoutput>
+
 

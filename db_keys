@@ -1,0 +1,122 @@
+schema in tables:
+announcements
+(id,vaann,dtpublish
+,istatus,iCrtBy,dtCrtOn,iModBy,dtModOn)
+
+users 
+(id,vausname,vauspwd,vaemail
+,istatus,iCrtBy,dtCrtOn,iModBy,dtModOn)
+
+users 
+(id,vausname,vauspwd,vaemail
+,istatus,iCrtBy,dtCrtOn,iModBy,dtModOn)
+
+permissions 
+(id,vacode,vadesc
+,istatus,iCrtBy,dtCrtOn,iModBy,dtModOn)
+
+groups 
+(id,dusers,dpermissions,
+,istatus,iCrtBy,dtCrtOn,iModBy,dtModOn)
+
+in trackers
+files
+(id,vafiletype,dclients,dbusinesses,vaykfileno,dtfileopen,dtfileclose
+,istatus,iCrtBy,dtCrtOn,iModBy,dtModOn)
+
+clients
+(id,vaclient,vagender,vamarital,didentity(type,code),vanationality,vaefile
+,dphones(primary,etc),demails(primary,etc),daddresses(primary,etc),dcontacts(name,cantactno),dremarks(date,remarks)
+,istatus,iCrtBy,dtCrtOn,iModBy,dtModOn)
+
+business
+(id,vabname,vabtype,vabregno,vaefile
+,dclients(refkey,position)
+,dphones(primary,etc),demails(primary,etc),daddresses(primary,etc),dcontacts(name,cantactno),dremarks(date,remarks)
+,istatus,iCrtBy,dtCrtOn,iModBy,dtModOn)
+
+tracker_calling
+(icallingid,icaseid
+,icaller,dtcalled,varemarks
+,istatus,iCrtBy,dtCrtOn,iModBy,dtModOn)
+
+tracker_review
+(ireviewid,icaseid
+,isender,dtsent,vasend
+,ireviewer,dtreviewed,varemarks
+,iammender,dtammend,vaammend
+,istatus,iCrtBy,dtCrtOn,iModBy,dtModOn)
+
+tracker_audit
+(iauditid,icaseid
+,refid,dtRegister 
+)
+
+
+
+labels
+(id,vaname,vadesc,
+,istatus,iCrtBy,dtCrtOn,iModBy,dtModOn)
+
+tracker
+(icaseid,vacasetype
+    ,labels(refid,dtlabelled)
+    ,vastage,mncp500
+    ,dtcase
+    ,ipic,dtpicasg,dtpictarget,dtpicprcssed,ipictarget
+    ,icaster,dtcasterasg,dtcastertarget,dtcasted,icastertarget
+    ,dtsubmission
+    ,vainvoice,dtinvoiced
+    ,dtcollected
+    ,dtclosed,dtclosereason,vacloseremarks
+,istatus,iCrtBy,dtCrtOn,iModBy,dtModOn)
+
+doctionary
+(vadomain,vaname,dvars
+,istatus,iCrtBy,dtCrtOn,iModBy,dtModOn)
+
+
+,{ vadomain:'file',vaname:'audit'
+    ,dvars:[
+         {vacode:100 ,vadesc: 'File created'}
+        ,{vacode:101 ,vadesc: 'File linked'}
+        ,{vacode:102 ,vadesc: 'File removed'}
+    ]
+}
+,{ vadomain:'personal profiler',vaname:'audit'
+    ,dvars:[
+         {vacode:200 ,vadesc: 'Personal Profile created'}
+        ,{vacode:201 ,vadesc: 'Personal Profile linked'}
+        ,{vacode:202 ,vadesc: 'Personal Profile removed'}
+    ]
+}
+,{ vadomain:'business profiler',vaname:'audit'
+    ,dvars:[
+         {vacode:300 ,vadesc: 'Business Profile created'}
+        ,{vacode:301 ,vadesc: 'Business Profile linked'}
+        ,{vacode:302 ,vadesc: 'Business Profile removed'}
+    ]
+}
+,{ vadomain:'tracker',vaname:'deltacasestatus'
+    ,dvars:[
+        {vacode:400,vadesc: 'Case created'}   
+        ,{vacode:401,vadesc: 'Case progressed'}
+        ,{vacode:402,vadesc: 'Case back-tracked'}
+        ,{vacode:403,vadesc: 'Case closed'}
+        ,{vacode:404,vadesc: 'Case reopened'}
+    ]
+}
+,{ vadomain:'tracker',vaname:'casestatus'
+    ,dvars: [
+         {vacode:500,vadesc:'Pending Client Documents'}
+        ,{vacode:501,vadesc:'Pending Case Processing'}
+        ,{vacode:502,vadesc:'Pending Casting & Checking'}
+        ,{vacode:503,vadesc:'Pending Review'}
+        ,{vacode:504,vadesc:'Pending Ammendment'}
+        ,{vacode:505,vadesc:'Pending E-Submission'}
+        ,{vacode:506,vadesc:'Pending Invoice'}
+        ,{vacode:507,vadesc:'Pending Collection'}
+        ,{vacode:508,vadesc:'Closed'} 
+    ]
+}
+

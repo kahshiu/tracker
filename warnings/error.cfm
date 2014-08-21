@@ -1,4 +1,6 @@
 <cfoutput>
+#attributes.eventname#
+#attributes.exception#
 <!--- 
 <cfif true>
         <table width=100% class='error'>

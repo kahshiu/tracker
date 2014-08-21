@@ -1,9 +1,9 @@
 <cfcomponent displayname="Security" output="true">
 
-    <cffunction access="public" name="isLegalScript" output=false>
+    <cffunction access="public" name="viaGateways" output=true>
         <cfargument name="accessedScript" required="true">
-        <cfargument name="allowedScript" required="false" default="#application.web.gateway#">
-        <cfreturn ListFindNoCase(arguments.allowedScript,arguments.accessedScript) gt 0>
+        <cfset approvedGateways = '#application.web.gateway#'>
+        <cfreturn ListFindNoCase(approvedGateways,arguments.accessedScript) gt 0>
     </cffunction>
 
     <cffunction access="public" name="status" output=true>
@@ -37,7 +37,11 @@
 --->
         <cfset authenticity.flag = true>
         <cfset authenticity.data = {}>
-        <cfset authenticity.data.identity = 'something'>
+        <cfif arguments.username eq 'admin'>
+            <cfset authenticity.data.identity.role = 'admin'>
+        <cfelse>
+            <cfset authenticity.data.identity.role = 'something'>
+        </cfif>
         <cfreturn authenticity>
     </cffunction>
 </cfcomponent>
