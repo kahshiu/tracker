@@ -13,21 +13,28 @@
     <cfelseif url.timeout eq 'med'> <cfset session.setting.overwrite = '120'>
     <cfelseif url.timeout eq 'kill'> <cfset session.setting.overwrite = '1'>
     </cfif>
+    <cfif attributes.origId neq ''>
+        <cfset prev.cfid = ListGetAt(attributes.origId,1,'|')>
+        <cfset prev.cftoken = ListGetAt(attributes.origId,2,'|')>
+        <cfset request.redirect = '#request.web.url#route=admin_sessiontracker&CFID=#prev.cfid#&CFTOKEN=#cftoken#'>
+        <cfexit method="exittemplate">
+    </cfif>
 </cfif>
+<!--- 
+issues with this file
+-users whose sessions already timeout after you clicked
+    -passed timeout
+    -timeout in 1 second
+-when too many sessions to control, build filters
+--->
 
-<cfset targeturl = '#request.web.URL#route=admin_sessiontracker&origId=#attributes.origId#'>
+
+
 <cfset variables.isOwnSession = false>
 <cfset variables.isCurrentSession = false>
 
+<cfset variables.targeturl = '#request.web.URL#route=admin_sessiontracker&origId=#attributes.origId#'>
 
-<!---  
-<cffunction access="public" name="genRefererURL" output="true">
-    <cfargument required="false" name="structURL" default={}>
-    <cfargument required="false" name="addtoken" default="yes">
-    <cf
-    <cfreturn >
-</cffunction>
---->
 <!--- /*{{{*/
 <cfparam name="attributes.print" default="sessionTrackerClass,sessionTracker,session">
 --->
@@ -80,9 +87,11 @@ print is list of options:
     <cfif ListFindNoCase(attributes.print,'sessionTracker') gt 0>
     <div class="grid grid-gutter-half">
         <h4 class="grid-item large-one-whole"> Total running session: #variables.total#</h4>
+        <h4 class="grid-item large-one-whole"> <i>Each session's functionalities are disabled when fails pessimistic checking that runs every second. <br>Press F5 to refresh to verify.</i></h4>
 
         <cfloop collection='#variables.sessions#' item="key">
             <cfset item = #variables.sessions[key]#>
+<!--- 
             <cfif attributes.origId neq ''>
                 <cfif ListGetAt(attributes.origId,1,'|') eq item.cfid and ListGetAt(attributes.origId,2,'|') eq item.cftoken>
                     <cfset variables.isOwnSession = true>
@@ -92,15 +101,18 @@ print is list of options:
             <cfelse>
                 <cfset variables.isOwnSession = false>
             </cfif>
+--->
             <cfset variables.isCurrentSession = session.sessionid eq item.sessionid>
             <hr>
             <div class="grid-item large-one-half"> 
                 Key: [#key#] <br>
+<!--- 
                 <cfif item.setting.timeout eq 1> 
                     ?#item.urltoken# 
                 <cfelse> 
-                    <a href='#targeturl#&#item.urltoken#' class="button">?#item.urltoken#</a> 
                 </cfif>
+--->
+                    <a href='#targeturl#&#item.urltoken#' class="button">?#item.urltoken#</a> 
             </div>
             <div class="grid-item large-one-half"> 
                 overwrite timeout:
@@ -108,9 +120,9 @@ print is list of options:
                 <cfif NOT isOwnSession
                     and item.setting.timeout neq 1 
                     and NOT (StructKeyExists(item.setting,'overwrite') and item.setting.overwrite eq 1)>
-                    <a href="#targeturl#&timeout=kill&#item.urltoken#" class="button">1s</a>
-                    <a href="#targeturl#&timeout=med&#item.urltoken#" class="button">120s</a>
-                    <a href="#targeturl#&timeout=long&#item.urltoken#" class="button">2700s</a>
+                    <a href="#targeturl#&&timeout=kill&#item.urltoken#" class="button">1s</a>
+                    <a href="#targeturl#&&timeout=med&#item.urltoken#" class="button">120s</a>
+                    <a href="#targeturl#&&timeout=long&#item.urltoken#" class="button">2700s</a>
                 </cfif> 
             </div>
             <div class="grid-item large-one-half"> 
@@ -122,28 +134,28 @@ print is list of options:
                 <div class="grid">
                     <div class="grid-item large-one-half"> 
                         Identity: 
-<!---  
-                        <cfif isDefined('item.data.identity')>
-                            <cfif StructKeyExists(item.data.identity,'vausmail')> #item.data.identity.vausmail#
-                            <cfelseif StructKeyExists(item.data.identity,'vausname')> #item.data.identity.vausname#
-                            <cfelse>unidentified
-                            </cfif>
-
-                            <cfif StructKeyExists(item.data.identity,'role')> (#item.data.identity.role#) 
-                            </cfif>
+                        <cfif isDefined('item.data.identity.vausname')>
+                            #item.data.identity.vausname#
+                        <cfelse>
+                            unidentified
                         </cfif>
+
+                        <cfif isDefined('item.data.identity.role')> 
+                            (#item.data.identity.role#) 
+                        </cfif>
+<!---  
                         <br>status: <cfif StructIsEmpty(item.data)> Not Logged <cfelse> Logged in </cfif>
 --->
                         <br>current timeout:
                         <cfif StructKeyExists(item.setting,'overwrite')>
-                          #item.setting.overwrite#
+                            #item.setting.overwrite#
                         <cfelse>
-                          #item.setting.timeout#
+                            #item.setting.timeout#
                         </cfif>
                     </div>
                     <div class="grid-item large-one-half"> 
                         <cfif variables.isOwnSession> <span style="background:darkred;color:white">&nbsp;own session&nbsp;</span> </cfif>
-                        <cfif variables.isCurrentSession> <span style="background:darkred;color:white">&nbsp;current session&nbsp;</span> </cfif>
+                        <cfif variables.isCurrentSession> <br><span style="background:darkred;color:white">&nbsp;current session&nbsp;</span> </cfif>
                     </div>
                 </div>
 
@@ -153,8 +165,6 @@ print is list of options:
     </cfif>
 
 <!---  
-            </tbody>
-        </table>
     </cfif>
     <cfif ListFindNoCase(attributes.print,'sessionClass') gt 0> 
     <br><cfdump var=#getMetadata(session)#> 

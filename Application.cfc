@@ -10,7 +10,7 @@
     <cfset this.clientStorage=false>
     <cfset this.scriptProtect=true>
 
-    <cfset variables.debug.sequence.activate = true>
+    <cfset variables.debug.sequence.activate = false>
     <cfset variables.debug.sequence.show = 'current'><!--- option to show stages (current, all) --->
 
 <!--- application hooks --->
