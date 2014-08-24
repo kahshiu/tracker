@@ -7,6 +7,7 @@
 
 <!--- page mappings --->
 <cfset variables.routes = {}>
+<cfset variables.routes.default = ''>
 <cfset variables.routes.warnings_home          = '/warnings/home.cfm'>
 <cfset variables.routes.warnings_illegalAccess = '/warnings/illegalAccess.cfm'>
 <cfset variables.routes.warnings_invalidPage   = '/warnings/invalidPage.cfm'>
@@ -64,8 +65,7 @@
 <cffunction name="routingError" output="true">
     <cfargument required="true" name="route">
 
-<!---  
-    <cfif variables.security.viaGateways(variables.targetScript)>
+    <cfif NOT variables.security.viaGateways(variables.targetScript)>
         <cfreturn 'warnings_illegalAccess'>
     </cfif>
 
@@ -80,7 +80,6 @@
     <cfif NOT StructKeyExists(variables.routes,'#arguments.route#')>
         <cfreturn 'warnings_invalidPage'>
     </cfif>
---->
 
     <cfif this.isRouteRecursive(arguments.route)>
         <cfreturn 'warnings_recursivePage'>

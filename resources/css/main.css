@@ -1277,7 +1277,33 @@ textarea {
 /**
  * YOUR MAGICAL CSS GOES HERE!
  */
-.header {padding-top:1.5rem}
+.header, .nav, .content {padding-top:1.5rem}
+.header2 {padding-top:0.5rem}
+.footer {padding-bottom:1.5rem}
+.footer2 {padding-bottom:0.5rem}
+
+input[type='text'].text-mini {line-height:1; padding:0px}
+.select-mini {height:22px}
+
+nav a {
+    color:#222;
+    text-decoration:none;
+}
+nav li {
+    background-color:#DEDEDE;
+    padding:0rem 0rem 0.5rem 0.5rem
+}
+nav li:hover {
+    background-color:#1FA3EC;
+}
+nav li:hover a{
+    color:white
+}
+.inactive{
+    background-color:#f4f4f4;
+    color:#aaa
+}
+
 
 
 
