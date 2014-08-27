@@ -40,26 +40,12 @@
     </div>
     <div class="grid-item large-two-fifths" style="vertical-align:bottom">
         <span class="h5">
-            <a href="">username</a> &nbsp; &nbsp; &nbsp; 
+            <a href="#request.web.url#route=user_personal&#session.urltoken#">username</a> &nbsp; &nbsp; &nbsp; 
             <a href="">logout</a> &nbsp; &nbsp; &nbsp; 
         </span>
     </div>
-    <div class="grid-item large-one-fifth" id="SectionNav">
-        <nav>
-            <div class="grid grid-gutter-none navlist">
-                <div class="grid-item one-half"> <input type="button" class="button button-small one-whole" name="" value="Links" data-bind="toggle:{type:'invert',target:'nav_links',selected:currentTab,state:{css:'inactive'}},click:toggleTab"> </div>
-                <div class="grid-item one-half"> <input type="button" class="button button-small one-whole" name="" value="Actions" data-bind="toggle:{type:'invert',target:'nav_actions',selected:currentTab,state:{css:'inactive'}},click:toggleTab"> </div>
-            </div>
-            <ul id="links" data-bind="toggle:{type:'match',target:'nav_links',selected:currentTab,state:{style:{'display':'block'},styleDef:{display:'none'}}}">
-                <li> <a href="">Profiler Home</a> </li>
-                <li> <a href="">Summary</a> </li>
-            </ul>
-            <ul id="links" data-bind="toggle:{type:'match',target:'nav_actions',selected:currentTab,state:{style:{'display':'block'},styleDef:{display:'none'}}}">
-                <li> <a href="">Create File</a> </li>
-                <li> <a href="">Create Personal Prf.</a> </li>
-                <li> <a href="">Create Business Prf.</a> </li>
-            </ul>
-        </nav>
+    <div class="grid-item large-one-fifth">
+        <cfmodule template="#request.dir.cfm#\navbar.cfm">
     </div>
     <div class="grid-item large-four-fifths content">#attributes.body#</div>
 </div>
@@ -93,31 +79,14 @@ style="background-color:#FF2D55; color:white">
                 $('##selectingApps').trigger('openModal')
             }
         }
-        function SectionNav() {
-            var self = this
-
-            /* static data */
-            /* observables */
-            this.currentTab = ko.observable('')
-
-            /* manual subscriptions */
-            /* behaviours */
-            this.toggleTab = function(){
-                var curr = self.currentTab()
-                self.currentTab(curr=='nav_links'?'nav_actions':'nav_links')
-            }
-        }
         function defaultSettings(){
-            sNav.currentTab('nav_links')
             sApp.currentApp(sApp.applications[0].app)
             sApp.currentSubApp(sApp.applications[0].subApp[0].name)
             sApp.currentLink(sApp.applications[0].subApp[0].link)
             $('##selectingApps').easyModal()
         }
         var sApp = new SectionApp()
-        var sNav = new SectionNav()
         ko.applyBindings(sApp,document.getElementById('SectionApp'))
-        ko.applyBindings(sNav,document.getElementById('SectionNav'))
         defaultSettings()
     </script>
 </cfoutput>

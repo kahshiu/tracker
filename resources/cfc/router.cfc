@@ -21,10 +21,15 @@
 <cfset variables.routes.admin_mongo            = '/admin/mongo.cfm'>
 <cfset variables.routes.db_home                = '/admin/db/home.cfm'>
 
-<cfset variables.routes.login_authenticate_act = '/login/authenticate.act.cfm'>
-<cfset variables.routes.login_ann              = '/login/announcements.cfm'>
 <cfset variables.routes.login_home             = '/login/home.cfm'>
+<cfset variables.routes.login_authenticate_act = '/login/authenticate.act.cfm'>
+<cfset variables.routes.user_personal         = '/login/personal.form.cfm'>
+<cfset variables.routes.user_ann              = '/login/announcements.cfm'>
+<cfset variables.routes.login_ann              = '/login/announcements.cfm'>
+
 <cfset variables.routes.tracker_home           = '/tracker/home.cfm'>
+<cfset variables.routes.file_form           = '/tracker/prf.file.form.cfm'>
+<cfset variables.routes.file_form_act       = '/tracker/prf.file.form.act.cfm'>
 
 <cffunction name="init" output="true">
     <cfargument required="true" name="targetRoute"> 
@@ -102,7 +107,9 @@
     <cfsavecontent variable='tempBody'> 
         <cfmodule template=#path.relative# data=#tempData#> 
     </cfsavecontent>
-    <cfif arguments.wrap and FileExists('#request.dir.root##path.extract#\wrapper.cfm')>
+    <cfif arguments.wrap 
+        and ListFindNoCase(arguments.route,'act','_') eq 0 
+        and FileExists('#request.dir.root##path.extract#\wrapper.cfm')>
         <cfsavecontent variable='tempBody'> 
             <cfmodule template="#path.extract#\wrapper.cfm" body=#tempBody#>
         </cfsavecontent>
@@ -134,8 +141,15 @@
     <cfargument required="true" name="route">
 
     <cfset var nojs='sha'>
-    <cfif arguments.route eq 'login_home'> 
-        <cfset nojs=request.obj.utils.ListRemoveValues(nojs,'sha')>
+    <cfset var nocss=''>
+
+    <cfif ListFindNoCase(arguments.route,'act','_') gt 0>
+        <cfset nojs = 'jq,jqModal,ko,kovalidation,_,custom,sha'>
+        <cfset nocss = 'cardinal'>
+    <cfelse>
+        <cfif arguments.route eq 'login_home'> 
+            <cfset nojs=request.obj.utils.ListRemoveValues(nojs,'sha')>
+        </cfif>
     </cfif>
 
     <cfreturn nojs>
