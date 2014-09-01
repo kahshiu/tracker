@@ -5,22 +5,22 @@
 
     <cfset use.js = 'jq,jqModal,ko,kovalidation,_,custom,sha'>
     <cfset use.css = 'cardinal'>
-    <cfif ListLen(attributes.nojs) gt 0> <cfset use.js = request.obj.utils.ListRemoveValues(use.js,attributes.nojs)> </cfif>
-    <cfif ListLen(attributes.nocss) gt 0> <cfset use.css = request.obj.utils.ListRemoveValues(use.css,attributes.nocss)> </cfif>
+    <cfif ListLen(attributes.nojs) gt 0> <cfset use.js = application.obj.utils.ListRemoveValues(use.js,attributes.nojs)> </cfif>
+    <cfif ListLen(attributes.nocss) gt 0> <cfset use.css = application.obj.utils.ListRemoveValues(use.css,attributes.nocss)> </cfif>
 </cfsilent>
 <cfoutput>
 <!DOCTYPE html>
 <html>
     <head>
         <title>Internal Applications</title>
-        <cfif ListFind(use.css,'cardinal')>    <link rel="stylesheet" href="#request.dir.css#\main.css"></cfif>
-        <cfif ListFind(use.js,'jq')>           <script type="text/javascript" src="#request.dir.js#\jquery-1.11.0.min.js"></script></cfif>
-        <cfif ListFind(use.js,'jqModal')>      <script type="text/javascript" src="#request.dir.js#\jquery.easyModal.js"></script></cfif>
-        <cfif ListFind(use.js,'ko')>           <script type="text/javascript" src="#request.dir.js#\knockout-latest.js"></script></cfif>
-        <cfif ListFind(use.js,'koValidation')> <script type="text/javascript" src="#request.dir.js#\knockout.validation.js"></script></cfif>
-        <cfif ListFind(use.js,'_')>            <script type="text/javascript" src="#request.dir.js#\underscore-min.js"></script></cfif>
-        <cfif ListFind(use.js,'sha')>          <script type="text/javascript" src="#request.dir.js#\crypto\sha.js"></script></cfif>
-        <cfif ListFind(use.js,'custom')>       <script type="text/javascript" src="#request.dir.js#\main.js"></script></cfif>
+        <cfif ListFind(use.css,'cardinal')>    <link rel="stylesheet" href="#application.vars.dir.css#\main.css"></cfif>
+        <cfif ListFind(use.js,'jq')>           <script type="text/javascript" src="#application.vars.dir.js#\jquery-1.11.0.min.js"></script></cfif>
+        <cfif ListFind(use.js,'jqModal')>      <script type="text/javascript" src="#application.vars.dir.js#\jquery.easyModal.js"></script></cfif>
+        <cfif ListFind(use.js,'ko')>           <script type="text/javascript" src="#application.vars.dir.js#\knockout-latest.js"></script></cfif>
+        <cfif ListFind(use.js,'koValidation')> <script type="text/javascript" src="#application.vars.dir.js#\knockout.validation.js"></script></cfif>
+        <cfif ListFind(use.js,'_')>            <script type="text/javascript" src="#application.vars.dir.js#\underscore-min.js"></script></cfif>
+        <cfif ListFind(use.js,'sha')>          <script type="text/javascript" src="#application.vars.dir.js#\crypto\sha.js"></script></cfif>
+        <cfif ListFind(use.js,'custom')>       <script type="text/javascript" src="#application.vars.dir.js#\main.js"></script></cfif>
 <!--- 
         <!-- custom validation template -->
         <script type="text/html" id="myValidationMsg">

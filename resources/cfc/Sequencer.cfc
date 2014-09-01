@@ -1,38 +1,31 @@
 <cfcomponent displayname="Sequencer" output="true">
-    <cfset variables.sequence = ''>
-    <cfset variables.currentSequence = ''>
 
-    <cffunction name="init" output="true">
-        <cfset variables.sequence = ''>
+    <cfset variables.labels = {}>
+    <cfset variables.labels.onApplicationStart = 'AppStarted'>
+    <cfset variables.labels.onApplicationEnd   = 'AppEnded'>
+    <cfset variables.labels.onSessionStart     = 'SessionStarted'>
+    <cfset variables.labels.onSessionEnd       = 'SessionEnded'>
+    <cfset variables.labels.onRequestStart     = 'RequestStarted'>
+    <cfset variables.labels.onRequest          = 'RequestExecuted'>
+    <cfset variables.labels.onRequestEnd       = 'RequestEnded'>
+    <cfset variables.labels.onError            = 'ErrorEncountered'>
+
+    <cfset this.sequence = ''>
+    <cfset this.fullSequence = ''>
+
+    <cffunction access="public" name="init" output="true">
+        <cfset this.sequence = ''>
+        <cfset this.fullSequence = ''>
+        <cfreturn this>
     </cffunction>
 
-    <cffunction name="resetSequence" output="true">
-        <cfset variables.sequence = ''>
+    <cffunction access="public" name="addSequence" output="true">
+        <cfargument required="false" name="fn" default="">
+
+        <cfset var sequence = variables.labels['#arguments.fn#']>
+        <cfset this.sequence = sequence>
+        <cfset this.fullSequence = ListAppend(this.fullSequence, sequence)>
+        <cfreturn sequence>
     </cffunction>
 
-    <cffunction name="setSequence" output="true">
-        <cfargument required="true" name="functionCalled" default="">
-        <cfset var labels = {}>
-        <cfset labels.onApplicationStart = 'AppStarted'>
-        <cfset labels.onApplicationEnd   = 'AppEnded'>
-        <cfset labels.onSessionStart     = 'SessionStarted'>
-        <cfset labels.onSessionEnd       = 'SessionEnded'>
-        <cfset labels.onRequestStart     = 'RequestStarted'>
-        <cfset labels.onRequest          = 'RequestExecuted'>
-        <cfset labels.onRequestEnd       = 'RequestEnded'>
-        <cfset labels.onError            = 'ErrorEncountered'>
-
-        <cfset var currentSequence = labels['#arguments.functionCalled#']>
-        <cfset variables.sequence = ListAppend(variables.sequence, currentSequence)>
-        <cfset variables.currentSequence = currentSequence>
-        <cfreturn currentSequence>
-    </cffunction>
-
-    <cffunction name="getSequence" output="true">
-        <cfreturn variables.currentSequence>
-    </cffunction>
-
-    <cffunction name="getFullSequence" output="true">
-        <cfreturn variables.sequence>
-    </cffunction>
 </cfcomponent>

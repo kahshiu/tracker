@@ -17,9 +17,9 @@ nav .nav {}
     </div>
     <div class="grid-item large-five-sixths">
 Main Admin Page
-    <a href="#request.web.URL#route=admin_r_index">Railo Main</a> 
-    || <a href="#application.railo.server#">Railo Admin</a> 
-    || <a href="#application.railo.web#">Railo Web</a>
+    <a href="#rereplace(application.vars.web.url,'{{querystring}}','route=admin_r_index')#">Railo Main</a> 
+    || <a href="#application.vars.railo.server#">Railo Admin</a> 
+    || <a href="#application.vars.railo.web#">Railo Web</a>
     </div>
 </div>
 </cfoutput>

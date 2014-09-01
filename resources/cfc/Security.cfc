@@ -2,18 +2,13 @@
 
     <cffunction access="public" name="viaGateways" output=true>
         <cfargument name="accessedScript" required="true">
-        <cfset approvedGateways = '#application.web.gateway#'>
-        <cfreturn ListFindNoCase(approvedGateways,arguments.accessedScript) gt 0>
+        <cfreturn ListFindNoCase(application.vars.web.gateway,arguments.accessedScript)>
     </cffunction>
 
     <cffunction access="public" name="status" output=true>
         <cfset var status = ''>
-        <cfif StructKeyExists(session,'data')>
-            <cfif StructIsEmpty(session.data)> 
-                <cfset status='loggedOut'>
-            <cfelse> 
-                <cfset status='loggedIn'>
-            </cfif>
+        <cfif StructKeyExists(session,'data') AND NOT StructIsEmpty(session.data)> 
+            <cfset status='loggedIn'>
         <cfelse> 
             <cfset status='unauthenticated'>
         </cfif>
@@ -26,7 +21,6 @@
 
         <cfset authenticity.flag = false>
 
-<!--- perform actual identity checks  --->
         <cfset authenticity.data = {}>
         <cfif arguments.username eq 'admin'>
             <cfset authenticity.flag = true>
@@ -35,6 +29,7 @@
             <cfset authenticity.flag = true>
             <cfset authenticity.data.identity.role = 'user'>
         </cfif>
+
         <cfreturn authenticity>
     </cffunction>
 </cfcomponent>

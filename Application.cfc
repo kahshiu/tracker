@@ -1,21 +1,24 @@
 <cfcomponent output=false hint="" >
 
-    <cfset this.name = 'Mothership'>
-    <cfset this.applicationTimeout=createTimeSpan(6,0,0,0)>
-    <cfset this.sessionManagement=true>
-    <cfset this.sessionTimeout=createTimeSpan(0,0,0,30)>
-    <cfset this.setClientCookies=false>
-    <cfset this.setDomainCookies=false>
-    <cfset this.clientManagement=false>
-    <cfset this.clientStorage=false>
-    <cfset this.scriptProtect=true>
+    <cfset this.name               = 'Mothership'>
+    <cfset this.applicationTimeout = createTimeSpan(6,0,0,0)>
+    <cfset this.sessionTimeout     = createTimeSpan(0,0,0,5)>
+    <cfset this.sessionManagement  = true>
+    <cfset this.setDomainCookies   = false>
+    <cfset this.setClientCookies   = false>
+    <cfset this.clientManagement   = false>
+    <cfset this.clientStorage      = false>
+    <cfset this.scriptProtect      = true>
 
-    <cfset variables.debug.sequence.activate = false>
-    <cfset variables.debug.sequence.show = 'current'><!--- option to show stages (current, all) --->
+    <cfset variables.labels.config.activate = true>
+    <cfset variables.labels.config.show     = ''> <!--- option to show stages (current, all) --->
+    <cfset variables.labels.sequence        = ''>
+    <cfset variables.labels.sequenceAll     = ''>
+    <cfset variables.reset.showMsg     = ''><!--- option to show reset msg (app,req) --->
 
 <!--- application hooks --->
     <cffunction access="public" name="onApplicationStart" output=true>
-        <cfset this.resetAppVars()>
+        <cfset this.resetAppScope('all')>
         <cfset this.stampSequence(getFunctionCalledName())>
         <cfset this.printSequence()>
     </cffunction>
@@ -28,20 +31,20 @@
 
 <!--- session hooks --->
     <cffunction access="public" name="onSessionStart" output=true>
-        <cfset application.web.latestSession = session.sessionId>
+        <cfset application.vars.web.latestSession = session.sessionId>
         <cfset session.setting.timeout = 1>
         <cfset session.setting.appNow = 'login'>
         <cfset session.setting.envNow = ''>
-        <cfset this.stampSequence(getFunctionCalledName())>
-        <cfset this.printSequence()>
         <!--- junk
         #getPageContext().getSession().invalidate()#
         --->
+        <cfset this.stampSequence(getFunctionCalledName())>
+        <cfset this.printSequence()>
     </cffunction>
 
     <cffunction access="public" name="onSessionEnd" output=true>
         <cfif StructKeyExists(session,'data')> 
-                <cfset StructClear(session.data)> 
+            <cfset StructDelete(session,'data')> 
         </cfif>
         <cfset this.stampSequence(getFunctionCalledName())>
         <cfset this.printSequence()>
@@ -51,16 +54,12 @@
     <cffunction access="public" name="onRequestStart" output=true>
         <cfargument name="targetPage" required="true">
         <cfargument name="resetAppVars" required="false" default="false">
-<!--- 
-<cfset arguments.resetAppVars = true>
-<cfset arguments.resetSessions = true>
+<!---  
+        <cfset this.resetAppScope('vars')>
+        <cfset this.resetAppScope('obj')>
 --->
-<cfset arguments.resetAppVars = true>
-
-        <cfif arguments.resetAppVars>
-            <cfset this.resetAppVars()> 
-        </cfif>
-        <cfset resetRequestVars()>
+        <cfset this.resetAppScope('all')>
+        <cfset this.resetRequestScope('all')>
 
         <!--- domain/ application access rights --->
         <!--- need to check if session is actuall permitted --->
@@ -72,10 +71,12 @@
     <cffunction access="public" name="onRequest" output=true>
         <cfargument name="targetPage" required="true">
         <cfif StructKeyExists(url,'route')>
-            <cfset var route = url.route>
+            <cfset application.obj.Router.setTargetRoute(url.route)>
         <cfelse>
-            <cfset var route = 'login_home'>
+            <cfset application.obj.Router.setTargetRoute('login_home')>
         </cfif>
+        <cfset application.obj.Router.setTargetScript(CGI.script_name)>
+
 
 <!--- 
 <cfexecute name="#request.dir.root#\test.bat" variable="data" timeout="10" />
@@ -85,14 +86,12 @@
 <cfdump var=#request.dir#>
 --->
         <cfset var body = ''>
-        <cfset request.obj.Router.init(route,arguments.targetPage,request.obj.Security)>
-        <cfset temp = request.obj.Router.view(route,false)>
-
-        <cfif FileExists('#request.dir.root#\wrapper.cfm')>
+        <cfset body = application.obj.Router.view()>
+        <cfif FileExists('#application.vars.dir.root#\wrapper.cfm')>
             <cfmodule template="wrapper.cfm" 
-                body=#temp# 
-                nojs=#request.obj.Router.nojs(route)# 
-                nocss=#request.obj.Router.nocss(route)#>
+                body=#body# 
+                nojs=#application.obj.Router.nojs()# 
+                nocss=#application.obj.Router.nocss()#>
         </cfif>
 
         <!--- domain event triggers --->
@@ -101,42 +100,43 @@
     </cffunction>
 
     <cffunction access="public" name="onRequestEnd" output=true>
+<!---  
+        <cfset request.obj.Router.setPassedRoutes('')>
+--->
         <!--- security status checking --->
-        <cfset currentStatus = request.obj.Security.status()>
+        <cfset var currentStatus = application.obj.Security.status()>
         <cfif currentStatus eq 'loggedIn'>
-
             <cfif session.data.identity.role eq "admin">
                 <cfset session.setting.appNow = 'admin'>
             <cfelse>
                 <cfset session.setting.appNow = 'tracker'>
-                <cfset session.setting.envNow = 'live'>
             </cfif>
-
             <cfset session.setting.timeout = 2700>
+
         <cfelse>
             <cfset session.setting.appNow = 'login'>
             <cfset session.setting.timeout = 1>
         </cfif>
+
+        <!--- logout operation --->
         <cfif StructKeyExists(session.setting,'overwrite')>
             <cfset session.setting.timeout = session.setting.overwrite>
             <cfset StructDelete(session.setting,'overwrite')>
         </cfif>
-
-        <!--- logout operation --->
-<!---  
         <cfif StructKeyExists(session,'data') and session.setting.timeout eq 1> 
-                <cfset StructDelete(session.data)> 
+            <cfset StructDelete(session,'data')> 
         </cfif>
---->
+
+        <!--- for stricter rules (really ensure session expired), sleep thread for 1 second --->
         <cfset session.setMaxInactiveInterval(session.setting.timeout)>
 
         <cfset this.stampSequence(getFunctionCalledName())>
         <cfset this.printSequence()>
 
+        <!--- redirect --->
         <cfif StructKeyExists(request,'redirect')>
             <cflocation url='#request.redirect#' addToken=no>            
         </cfif>
-        <!--- for stricter rules (really ensure session expired), sleep thread for 1 second --->
     </cffunction>
 
 <!--- error hooks --->
@@ -148,75 +148,157 @@
     </cffunction>
 
 <!--- custom functions --->
-    <cffunction access="public" name="resetAppVars" output=true>
-        <cfset application.web = {}>
-        <cfset application.web.host = '#CGI.server_name#:#CGI.server_port#'>
-        <cfset application.web.gateway = '/index.cfm'>
-        <cfset application.web.URL = 'http://#application.web.host##application.web.gateway#?'>
-        <cfset application.web.latestSession = ''>
-        <cfset application.dir = {}>
-        <cfset application.dir.root = '#server.coldfusion.rootdir#'>
-        <cfset application.dir.cfc = '\resources\cfc'>
-        <cfset application.dir.cfm = '\resources\cfm'>
-        <cfset application.dir.css = '\resources\css'>
-        <cfset application.dir.js  = '\resources\js'>
-        <cfset application.obj = populateCFCs()>
-        <cfset application.railo = {}>
-        <cfset application.railo.home = "http://#application.web.host#/railo.index.cfm">
-        <cfset application.railo.server = "http://#application.web.host#/railo-context/admin/server.cfm">
-        <cfset application.railo.web = "http://#application.web.host#/railo-context/admin/web.cfm">
+    <cffunction access="public" name="resetAppScope" output=true>
+        <cfargument name="values" required="true">
+        <!--- {{{ application vars --->
+        <cfif ListFindNoCase(arguments.values, 'vars') gt 0 OR ListFindNoCase(arguments.values, 'all') gt 0>
+            <cfset application.vars = {}>
+
+            <cfset application.vars.dir      = {}>
+            <cfset application.vars.dir.root = '#server.coldfusion.rootdir#'>
+            <cfset application.vars.dir.cfc  = '\resources\cfc'>
+            <cfset application.vars.dir.cfm  = '\resources\cfm'>
+            <cfset application.vars.dir.css  = '\resources\css'>
+            <cfset application.vars.dir.js   = '\resources\js'>
+
+            <cfset application.vars.web               = {}>
+            <cfset application.vars.web.host          = 'http://#CGI.server_name#:#CGI.server_port#'>
+            <cfset application.vars.web.gateway       = '/index.cfm'>
+            <cfset application.vars.web.url           = '#application.vars.web.host##application.vars.web.gateway#?{{queryString}}&#session.urltoken#'>
+            <cfset application.vars.web.latestSession = ''>
+
+            <cfset application.vars.railo        = {}>
+            <cfset application.vars.railo.home   = "#application.vars.web.host#/railo.index.cfm">
+            <cfset application.vars.railo.server = "#application.vars.web.host#/railo-context/admin/server.cfm">
+            <cfset application.vars.railo.web    = "#application.vars.web.host#/railo-context/admin/web.cfm">
+
+            <cfset application.vars.labels.onApplicationStart = 'AppStarted'>
+            <cfset application.vars.labels.onApplicationEnd   = 'AppEnded'>
+            <cfset application.vars.labels.onSessionStart     = 'SessionStarted'>
+            <cfset application.vars.labels.onSessionEnd       = 'SessionEnded'>
+            <cfset application.vars.labels.onRequestStart     = 'RequestStarted'>
+            <cfset application.vars.labels.onRequest          = 'RequestExecuted'>
+            <cfset application.vars.labels.onRequestEnd       = 'RequestEnded'>
+            <cfset application.vars.labels.onError            = 'ErrorEncountered'>   
+
+            <cfset application.vars.routes = {}>
+            <cfset application.vars.routes.default                = ''>
+            <cfset application.vars.routes.warnings_home          = '/warnings/home.cfm'>
+            <cfset application.vars.routes.warnings_illegalAccess = '/warnings/illegalAccess.cfm'>
+            <cfset application.vars.routes.warnings_invalidPage   = '/warnings/invalidPage.cfm'>
+            <cfset application.vars.routes.warnings_recursivePage = '/warnings/recursivePage.cfm'>
+            <cfset application.vars.routes.warnings_refusedPage   = '/warnings/refusedPage.cfm'>
+
+            <cfset application.vars.routes.admin_random           = '/admin/random.cfm'>
+            <cfset application.vars.routes.admin_home             = '/admin/home.cfm'>
+            <cfset application.vars.routes.admin_r_index          = '/admin/railo.index.cfm'>
+            <cfset application.vars.routes.admin_sessiontracker   = '/admin/sessiontracker.cfm'>
+            <cfset application.vars.routes.admin_mongo            = '/admin/mongo.cfm'>
+            <cfset application.vars.routes.db_home                = '/admin/db/home.cfm'>
+
+            <cfset application.vars.routes.login_home             = '/login/home.cfm'>
+            <cfset application.vars.routes.login_authenticate_act = '/login/authenticate.act.cfm'>
+            <cfset application.vars.routes.user_personal          = '/login/personal.form.cfm'>
+            <cfset application.vars.routes.user_ann               = '/login/announcements.cfm'>
+            <cfset application.vars.routes.login_ann              = '/login/announcements.cfm'>
+
+            <cfset application.vars.routes.tracker_home           = '/tracker/home.cfm'>
+            <cfset application.vars.routes.file_form              = '/tracker/prf.file.form.cfm'>
+            <cfset application.vars.routes.file_form_act          = '/tracker/prf.file.form.act.cfm'>  
+
+            <cfif ListFindNoCase(variables.reset.showMsg,'app') gt 0>
+                <cfdump var='application: vars reset'>
+            </cfif>
+        </cfif>
+        <!--- }}} --->
+
+        <cfif ListFindNoCase(arguments.values,'obj') gt 0 OR ListFindNoCase(arguments.values, 'all') gt 0>
+            <cfset application.obj = {}>
+            <cfset application.obj = instantiateCFCs()>  
+
+            <cfif ListFindNoCase(variables.reset.showMsg,'app') gt 0>
+                <cfdump var='application: obj reset'>
+            </cfif>
+        </cfif>
+
+<!---  
+        <cfif ListFindNoCase(arguments.values,'db') gt 0 OR ListFindNoCase(arguments.values, 'all') gt 0>
+            <cfset application.db = {}>
+            <cfset application.db.jFactory = createObject('component','cfmongodb.core.JavaloaderFactory').init()>
+            <cfset application.db.config = createObject('component','cfmongodb.core.MongoConfig').init(dbName="logger", mongoFactory=#application.db.jFactory#)>
+            <cfset application.db.logger = createObject('component','cfmongodb.core.MongoClient').init(mongoConfig)>
+
+            <cfif ListFindNoCase(variables.reset.showMsg,'app') gt 0>
+                <cfdump var='application: obj reset'>
+            </cfif>
+        </cfif>
+--->
     </cffunction>
-    <cffunction name="resetRequestVars" output="true">
-        <cfset request.web = application.web>
-        <cfset request.dir = application.dir>
-        <cfset request.obj = application.obj>
-        <cfset request.db = this.resetDB(session.setting.appNow,session.setting.envNow)>
-    </cffunction>
-    <cffunction access="public" name="resetDB" output=false>
-        <cfargument name="app" required="true">
+
+    <cffunction name="resetRequestScope" output="true">
+        <cfargument name="values" required="true">
+        <cfif ListFindNoCase(arguments.values,'vars') gt 0 OR ListFindNoCase(arguments.values,'all') gt 0>
+            <cfset request.vars.routes.targetRoute  = ''>
+            <cfset request.vars.routes.targetScript = ''>
+            <cfset request.vars.routes.passed       = ''>
+
+            <cfif ListFindNoCase(variables.reset.showMsg,'req') gt 0>
+                <cfdump var='request: vars reset'>
+            </cfif>
+        </cfif>
+        <cfif ListFindNoCase(arguments.values,'db') gt 0 OR ListFindNoCase(arguments.values,'vars') gt 0>
+            <!--- reset db --->
+<!---  
+     <cfargument name="app" required="true">
         <cfargument name="environment" required="false" default="">
         <cfset db = ''>
         <cfif arguments.app eq 'tracker'>
-            <cfif arguments.environment eq 'live'>         <cfset db = 'tracker'>
-            <cfelseif arguments.environment eq 'training'> <cfset db = 'tracker_testing'>
+            <cfif arguments.environment eq 'live'>         
+                <cfset db = 'tracker'>
+            <cfelseif arguments.environment eq 'training'> 
+                <cfset db = 'tracker_testing'>
             </cfif>
         <cfelseif arguments.app eq 'login' OR arguments.app eq 'admin'>
             <cfset db = 'login'>
         </cfif>
-        <cfreturn db>
-    </cffunction>
-
-    <cffunction access="public" name="populateCFCs" output="true">
-        <cfargument required="false" name="cfcPath" default="#application.dir.cfc#">
-        <cfargument required="false" name="rootPath" default="#application.dir.root#">
-        <cfset temp = {}>
-        <cfset REroot = REReplace('#arguments.rootPath#','\\','\\','all')>
-        <cfdirectory directory="#arguments.cfcPath#" action="list" filter="*.cfc" name="cfc" recurse="true" type="file">
-        <cfloop query="cfc">
-            <cfset cfcname = REReplace(name,'(\w+).cfc','\1')>
-            <cfset cfcDir = REReplace(directory,'#RERoot#','','all')>
-            <cfobject type="component" component="#cfcDir#\#cfcname#" name="temp.#cfcname#">
-        </cfloop>
-        <cfreturn temp>
-    </cffunction>
-    <cffunction name="stampSequence" output="true">
-        <cfargument required="true" name="functionName" default="">
-        <cfif variables.debug.sequence.activate>
-            <cfif NOT StructKeyExists(variables,'Sequencer')>
-                <cfset variables.Sequencer = application.obj.Sequencer>
-                <cfset variables.Sequencer.init()>
-            </cfif>
-            <cfset variables.Sequencer.setSequence(arguments.functionName)>
+        <cfreturn db>   
+--->
         </cfif>
     </cffunction>
-    <cffunction name="printSequence" output="true">
-        <cfif variables.debug.sequence.activate>
-            <cfif ListFindNoCase(variables.debug.sequence.show,'all') gt 0> 
-                <cfdump var='Full Stages: #variables.sequencer.getFullSequence()#'>
-            </cfif>
-            <cfif ListFindNoCase(variables.debug.sequence.show,'current') gt 0> 
-                <cfdump var='Current Stage: #variables.sequencer.getSequence()#'>
-            </cfif>
+
+    <cffunction access="public" name="instantiateCFCs" output="true">
+        <cfargument required="false" name="cfcPath" default="#application.vars.dir.cfc#">
+        <cfargument required="false" name="rootPath" default="#application.vars.dir.root#">
+
+        <cfset var obj = {}>
+        <cfset var qfiles = ''>
+        <cfset var REroot = REReplace('#arguments.rootPath#','\\','\\','all')>
+
+        <cfdirectory directory="#arguments.cfcPath#" action="list" filter="*.cfc" name="qfiles" recurse="true" type="file">
+        <cfloop query="qfiles">
+            <cfset cfcname = REReplace(name,'(\w+).cfc','\1')>
+            <cfset cfcDir = REReplace(directory,'#RERoot#','','all')>
+            <cfobject type="component" component="#cfcDir#\#cfcname#" name="obj.#cfcname#">
+        </cfloop>
+        <cfreturn obj>
+    </cffunction>
+
+    <!--- debugger: sequence --->
+    <cffunction access="public" name="stampSequence" output="true">
+        <cfargument name="functionCalled" required="true">
+        <cfif variables.labels.config.activate>
+            <cfset var sequence = application.vars.labels['#arguments.functionCalled#']> 
+            <cfset variables.labels.sequence = sequence>
+            <cfset variables.labels.sequenceAll = ListAppend(variables.labels.sequenceAll,sequence)>
+        </cfif>
+    </cffunction>
+
+    <cffunction access="public" name="printSequence" output="true">
+        <cfif ListFindNoCase(variables.labels.config.show,'current')>
+            <cfdump var=#variables.labels.sequence#>
+        </cfif>
+        <cfif ListFindNoCase(variables.labels.config.show,'all')>
+            <cfdump var=#variables.labels.sequenceAll#>
         </cfif>
     </cffunction>
 
